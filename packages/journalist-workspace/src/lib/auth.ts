@@ -6,6 +6,9 @@ import { encryptData, decryptData, generateDEK, encryptDEK, decryptDEK } from "@
 
 type LoginResult = { success: true; token: string; role: Role } | { success: false; token?: undefined }
 
+// In-memory TOTP token blacklist: "userId:token" → expiry timestamp
+const totpUsed = new Map<string, number>()
+
 export function createAuthService(opts: { db: Db; sessionStore: SessionStore; masterKey: Buffer }) {
   return {
     async createUser(username: string, password: string, role: Role) {
@@ -22,7 +25,7 @@ export function createAuthService(opts: { db: Db; sessionStore: SessionStore; ma
     async login(username: string, password: string, totpToken: string): Promise<LoginResult> {
       const user = await opts.db.getUserByUsername(username)
       if (!user) {
-        await argon2.hash("dummy", { type: argon2.argon2id, memoryCost: 1024, timeCost: 2, parallelism: 1 })
+        await argon2.hash("dummy", { type: argon2.argon2id, memoryCost: 262144, timeCost: 4, parallelism: 1 })
         return { success: false }
       }
       const passwordOk = await argon2.verify(user.argon2_hash, password)
@@ -32,6 +35,14 @@ export function createAuthService(opts: { db: Db; sessionStore: SessionStore; ma
       const secretBuf = await decryptData(encSecret, dek)
       const totpOk = authenticator.verify({ token: totpToken, secret: secretBuf.toString("utf8") })
       if (!totpOk) return { success: false }
+
+      // Replay protection
+      const tokenKey = `${user.id}:${totpToken}`
+      const now = Date.now()
+      for (const [k, exp] of totpUsed) { if (now > exp) totpUsed.delete(k) }
+      if (totpUsed.has(tokenKey)) return { success: false }
+      totpUsed.set(tokenKey, now + 90_000)
+
       const token = opts.sessionStore.createSession(user.id, user.role)
       return { success: true, token, role: user.role }
     },

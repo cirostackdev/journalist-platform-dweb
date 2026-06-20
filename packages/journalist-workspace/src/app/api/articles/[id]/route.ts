@@ -40,6 +40,9 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   const article = await db.getArticle(params.id)
   if (!article) return NextResponse.json({ error: "Not found" }, { status: 404 })
+  if (session.role !== "admin" && article.author_id !== session.userId) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+  }
   if (article.status === "published") {
     return NextResponse.json({ error: "Cannot edit a published article" }, { status: 400 })
   }
