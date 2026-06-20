@@ -52,8 +52,10 @@ chmod 700 /var/lib/tor/source-portal /var/lib/tor/journalist-workspace /var/lib/
 
 echo "=== Installing systemd units ==="
 cp "$(dirname "$0")/source-portal.service" /etc/systemd/system/
+cp "$(dirname "$0")/journalist-workspace.service" /etc/systemd/system/
 systemctl daemon-reload
 systemctl enable source-portal
+systemctl enable journalist-workspace
 
 echo "=== Enabling automatic security updates ==="
 cat > /etc/apt/apt.conf.d/20auto-upgrades <<'APTEOF'
