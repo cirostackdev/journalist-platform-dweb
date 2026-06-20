@@ -2,7 +2,7 @@ import { Router } from "express"
 import multer from "multer"
 import argon2 from "argon2"
 import { createHmac } from "crypto"
-import { readFileSync, writeFileSync, mkdirSync, unlinkSync } from "fs"
+import { readFileSync, writeFileSync, mkdirSync, unlinkSync, statSync } from "fs"
 import { join } from "path"
 import type { Db } from "../db"
 import { generateDiceware } from "../wordlist"
@@ -12,6 +12,7 @@ import {
   encryptDEK,
   deriveSourceKeypair,
   sealedBoxEncrypt,
+  encryptStreamToFile,
 } from "@journalist/shared/crypto"
 import { writeQueueMessage } from "@journalist/shared/queue"
 import { stripMetadata } from "../stripMetadata"
@@ -31,7 +32,7 @@ export function createSubmitRouter(opts: SubmitRouterOptions): Router {
   const router = Router()
   const upload = multer({
     dest: opts.uploadDir ?? "/var/secure/upload-tmp",
-    limits: { fileSize: 256 * 1024 * 1024, files: 10 },
+    limits: { fileSize: 2 * 1024 * 1024 * 1024, files: 10 },
   })
 
   router.post("/", upload.array("files"), async (req, res) => {
@@ -90,17 +91,28 @@ export function createSubmitRouter(opts: SubmitRouterOptions): Router {
         const submissionDir = join(submissionsDir, submissionDirName)
         mkdirSync(submissionDir, { recursive: true })
 
+        const STREAM_THRESHOLD = 64 * 1024 * 1024 // 64 MB
+        const fileSize = statSync(file.path).size
         const fileBytes = readFileSync(file.path)
-
-        // Strip metadata before encryption
         const { data: cleanBytes, stripped, warning } = await stripMetadata(fileBytes, file.originalname)
         if (warning) console.warn(`[submit] File ${i} (${file.originalname}): ${warning}`)
-        const bytesToEncrypt = cleanBytes
 
         const dek = await generateDEK()
-        const encContent = await encryptData(bytesToEncrypt, dek)
-        const filePath = join(submissionDir, `${i}.enc`)
-        writeFileSync(filePath, encContent, "utf8")
+        let filePath: string
+        if (fileSize >= STREAM_THRESHOLD) {
+          // Large file: write clean bytes to a temp file, then stream-encrypt to destination
+          filePath = join(submissionDir, `${i}.enc`)
+          const tmpCleanPath = file.path + ".clean"
+          writeFileSync(tmpCleanPath, cleanBytes)
+          const dekBytes = new Uint8Array(dek)
+          await encryptStreamToFile(tmpCleanPath, filePath, dekBytes)
+          unlinkSync(tmpCleanPath)
+        } else {
+          // Small file: single-shot encrypt
+          filePath = join(submissionDir, `${i}.enc`)
+          const encContent = await encryptData(cleanBytes, dek)
+          writeFileSync(filePath, encContent, "utf8")
+        }
 
         const sealedDek = await sealedBoxEncrypt(Buffer.from(dek), opts.newsroomPublicKey)
         const encFilename = await encryptData(file.originalname, dek)
