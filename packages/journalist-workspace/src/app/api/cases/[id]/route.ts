@@ -25,7 +25,13 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
   // Read submission content from source portal DB (best-effort)
   let submission: { hasText: boolean; text: string | null; files: { index: number; originalName: string | null }[] } | null = null
   try {
-    const content = await getSubmissionContent(caseData.submission_ref, masterKey, portalDbPath)
+    const { newsroomPublicKey, newsroomPrivateKey } = getGlobals()
+    const content = await getSubmissionContent(
+      caseData.submission_ref,
+      newsroomPublicKey,
+      newsroomPrivateKey,
+      portalDbPath
+    )
     if (content) {
       submission = { hasText: content.hasText, text: content.text, files: content.files.map(f => ({ index: f.index, originalName: f.originalName })) }
     }

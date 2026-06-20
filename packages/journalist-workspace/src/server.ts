@@ -33,12 +33,20 @@ async function main() {
   const salt = readFileSync(SALT_PATH)
   const passphrase = await promptPassphrase()
   const masterKey = await deriveMasterKey(passphrase, salt)
+  const newsroomPubHex = process.env.NEWSROOM_PUBLIC_KEY_HEX
+  const newsroomPrivHex = process.env.NEWSROOM_PRIVATE_KEY_HEX
+  if (!newsroomPubHex || !newsroomPrivHex) {
+    console.error("NEWSROOM_PUBLIC_KEY_HEX and NEWSROOM_PRIVATE_KEY_HEX env vars are required.")
+    process.exit(1)
+  }
+  const newsroomPublicKey = new Uint8Array(Buffer.from(newsroomPubHex, "hex"))
+  const newsroomPrivateKey = new Uint8Array(Buffer.from(newsroomPrivHex, "hex"))
   const keyFingerprint = createHash("sha256").update(masterKey).digest("hex").slice(0, 12)
   console.log(`Master key fingerprint: ${keyFingerprint} — verify this matches the other service.`)
   const queueKey = new Uint8Array(readFileSync(QUEUE_KEY_RAW_PATH))
   const db = await openDb(DATABASE_URL)
   const sessionStore = createSessionStore()
-  initGlobals({ db, sessionStore, masterKey, queueKey, toWorkspaceQueueDir: TO_WORKSPACE_QUEUE_DIR, toPortalQueueDir: TO_PORTAL_QUEUE_DIR, publicationDir: PUBLICATION_DIR, portalDbPath: PORTAL_DB_PATH })
+  initGlobals({ db, sessionStore, masterKey, queueKey, toWorkspaceQueueDir: TO_WORKSPACE_QUEUE_DIR, toPortalQueueDir: TO_PORTAL_QUEUE_DIR, publicationDir: PUBLICATION_DIR, portalDbPath: PORTAL_DB_PATH, newsroomPublicKey, newsroomPrivateKey })
   createQueueConsumer({ db, queueDir: TO_WORKSPACE_QUEUE_DIR, queueKey })
   console.log("Queue consumer started.")
   const app = next({ dev: false, hostname: "127.0.0.1", port: PORT })

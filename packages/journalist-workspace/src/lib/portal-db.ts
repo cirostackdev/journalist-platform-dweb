@@ -1,5 +1,5 @@
 import { Database } from "bun:sqlite"
-import { decryptDEK, decryptData } from "@journalist/shared/crypto"
+import { sealedBoxDecrypt, decryptData } from "@journalist/shared/crypto"
 
 export interface SubmissionContent {
   submissionId: string
@@ -8,13 +8,10 @@ export interface SubmissionContent {
   files: { index: number; originalName: string | null; encFilePath: string }[]
 }
 
-/**
- * Opens the source portal SQLite DB read-only and decrypts the submission content.
- * Returns null if the DB path is not configured or the submission is not found.
- */
 export async function getSubmissionContent(
   submissionId: string,
-  masterKey: Buffer,
+  newsroomPublicKey: Uint8Array,
+  newsroomPrivateKey: Uint8Array,
   portalDbPath: string
 ): Promise<SubmissionContent | null> {
   let db: InstanceType<typeof Database> | null = null
@@ -30,26 +27,26 @@ export async function getSubmissionContent(
     let text: string | null = null
     if (row.encrypted_text) {
       try {
-        const { dek: encDek, body: encBody } = JSON.parse(row.encrypted_text)
-        const dek = await decryptDEK(encDek, masterKey)
-        const buf = await decryptData(encBody, dek)
+        const buf = await sealedBoxDecrypt(row.encrypted_text, newsroomPublicKey, newsroomPrivateKey)
         text = buf.toString("utf8")
       } catch {
         text = "[decryption error]"
       }
     }
 
-    // Read file metadata from submission_files table
     const fileRows = db
-      .query("SELECT id, encrypted_filename, encrypted_dek, file_path FROM submission_files WHERE submission_id = ? ORDER BY rowid ASC")
+      .query(
+        "SELECT id, encrypted_filename, encrypted_dek, file_path FROM submission_files WHERE submission_id = ? ORDER BY rowid ASC"
+      )
       .all(submissionId) as { id: string; encrypted_filename: string; encrypted_dek: string; file_path: string }[]
 
     const files = await Promise.all(
       fileRows.map(async (f, i) => {
         let originalName: string | null = null
         try {
-          const dek = await decryptDEK(f.encrypted_dek, masterKey)
-          const buf = await decryptData(f.encrypted_filename, dek)
+          // encrypted_dek column now stores sealedDek (sealed with newsroom public key)
+          const dek = await sealedBoxDecrypt(f.encrypted_dek, newsroomPublicKey, newsroomPrivateKey)
+          const buf = await decryptData(f.encrypted_filename, new Uint8Array(dek))
           originalName = buf.toString("utf8")
         } catch {
           originalName = null
@@ -59,6 +56,24 @@ export async function getSubmissionContent(
     )
 
     return { submissionId, hasText: !!text, text, files }
+  } finally {
+    db?.close()
+  }
+}
+
+export async function getSourcePublicKeyForSubmission(
+  submissionId: string,
+  portalDbPath: string
+): Promise<string | null> {
+  let db: InstanceType<typeof Database> | null = null
+  try {
+    db = new Database(portalDbPath, { readonly: true })
+    const row = db
+      .query(
+        "SELECT s.source_public_key FROM sources s JOIN submissions sub ON sub.source_id = s.id WHERE sub.id = ?"
+      )
+      .get(submissionId) as { source_public_key: string } | null
+    return row?.source_public_key ?? null
   } finally {
     db?.close()
   }

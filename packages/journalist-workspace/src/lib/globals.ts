@@ -2,12 +2,16 @@ import type { Db } from "./db"
 import type { SessionStore } from "./session"
 
 export type Globals = {
-  db: Db; sessionStore: SessionStore; masterKey: Buffer
+  db: Db
+  sessionStore: SessionStore
+  masterKey: Buffer
   queueKey: Uint8Array
-  toWorkspaceQueueDir: string  // workspace reads from here (new_submission)
-  toPortalQueueDir: string     // workspace writes to here (journalist_reply)
+  toWorkspaceQueueDir: string
+  toPortalQueueDir: string
   publicationDir: string
-  portalDbPath: string  // path to source portal's SQLite DB (read-only)
+  portalDbPath: string
+  newsroomPublicKey: Uint8Array
+  newsroomPrivateKey: Uint8Array
 }
 
 let globals: Globals | null = null
