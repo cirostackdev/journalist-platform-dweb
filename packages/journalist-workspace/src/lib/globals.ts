@@ -7,6 +7,7 @@ export type Globals = {
   toWorkspaceQueueDir: string  // workspace reads from here (new_submission)
   toPortalQueueDir: string     // workspace writes to here (journalist_reply)
   publicationDir: string
+  portalDbPath: string  // path to source portal's SQLite DB (read-only)
 }
 
 let globals: Globals | null = null

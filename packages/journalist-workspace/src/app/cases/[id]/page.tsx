@@ -12,6 +12,12 @@ interface Note {
   body: string
 }
 
+interface Submission {
+  hasText: boolean
+  text: string | null
+  files: { index: number; originalName: string | null }[]
+}
+
 interface ArticleItem {
   id: string
   status: string
@@ -78,6 +84,7 @@ export default function CasePage({ params }: { params: { id: string } }) {
   const [caseData, setCaseData] = useState<CaseData | null>(null)
   const [notes, setNotes] = useState<Note[]>([])
   const [articles, setArticles] = useState<ArticleItem[]>([])
+  const [submission, setSubmission] = useState<Submission | null>(null)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [role, setRole] = useState<string | null>(null)
@@ -119,6 +126,7 @@ export default function CasePage({ params }: { params: { id: string } }) {
       } else {
         setCaseData(data.case)
         setNotes(data.notes ?? [])
+        setSubmission(data.submission ?? null)
         setSelectedStatus(data.case?.status ?? "new")
         const artRes = await fetch(`/api/cases/${id}/articles`, { headers: { "x-session": token } })
         const artData = await artRes.json()
@@ -321,6 +329,33 @@ export default function CasePage({ params }: { params: { id: string } }) {
                 </p>
               )}
             </div>
+
+            {/* Source Submission */}
+            {submission && (
+              <section className="space-y-3">
+                <h2 className="text-sm font-semibold text-white">Source Submission</h2>
+                {submission.text && (
+                  <div className="bg-gray-800 rounded-xl border border-gray-700 p-4">
+                    <p className="text-xs text-gray-500 mb-2">Message from source</p>
+                    <p className="text-sm text-gray-200 whitespace-pre-wrap">{submission.text}</p>
+                  </div>
+                )}
+                {submission.files.length > 0 && (
+                  <div className="bg-gray-800 rounded-xl border border-gray-700 p-4 space-y-1">
+                    <p className="text-xs text-gray-500 mb-2">Attached files ({submission.files.length})</p>
+                    {submission.files.map((f) => (
+                      <div key={f.index} className="text-sm text-gray-300 flex items-center gap-2">
+                        <span className="text-gray-500">📄</span>
+                        {f.originalName ?? `File ${f.index + 1}`}
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {!submission.text && submission.files.length === 0 && (
+                  <p className="text-sm text-gray-500">Submission content not available.</p>
+                )}
+              </section>
+            )}
 
             {/* Notes */}
             <section className="space-y-3">

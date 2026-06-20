@@ -14,6 +14,7 @@ const TO_WORKSPACE_QUEUE_DIR = "/var/secure-queue/to-workspace"
 const TO_PORTAL_QUEUE_DIR = "/var/secure-queue/to-portal"
 const QUEUE_KEY_RAW_PATH = "/var/secure/queue.key"
 const PUBLICATION_DIR = "/var/publication"
+const PORTAL_DB_PATH = process.env.PORTAL_DB_PATH ?? "/var/secure/source-portal.db"
 const DATABASE_URL = process.env.DATABASE_URL ?? "postgres://localhost/journalist_workspace"
 const PORT = 3001
 
@@ -37,7 +38,7 @@ async function main() {
   const queueKey = new Uint8Array(readFileSync(QUEUE_KEY_RAW_PATH))
   const db = await openDb(DATABASE_URL)
   const sessionStore = createSessionStore()
-  initGlobals({ db, sessionStore, masterKey, queueKey, toWorkspaceQueueDir: TO_WORKSPACE_QUEUE_DIR, toPortalQueueDir: TO_PORTAL_QUEUE_DIR, publicationDir: PUBLICATION_DIR })
+  initGlobals({ db, sessionStore, masterKey, queueKey, toWorkspaceQueueDir: TO_WORKSPACE_QUEUE_DIR, toPortalQueueDir: TO_PORTAL_QUEUE_DIR, publicationDir: PUBLICATION_DIR, portalDbPath: PORTAL_DB_PATH })
   createQueueConsumer({ db, queueDir: TO_WORKSPACE_QUEUE_DIR, queueKey })
   console.log("Queue consumer started.")
   const app = next({ dev: false, hostname: "127.0.0.1", port: PORT })
