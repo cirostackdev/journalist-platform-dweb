@@ -1,0 +1,69 @@
+<h2>Source Portal — Design Direction</h2>
+<p class="subtitle">This is the public-facing .onion site sources visit to submit tips. Which visual mood feels right?</p>
+
+<div class="cards">
+
+  <!-- Option A: Dark Minimal -->
+  <div class="card" data-choice="dark-minimal" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#0A0E1A;padding:20px;font-family:system-ui;min-height:200px;display:flex;flex-direction:column;gap:12px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+        <div style="width:8px;height:8px;border-radius:50%;background:#10B981;"></div>
+        <span style="color:#64748B;font-size:11px;letter-spacing:.08em;text-transform:uppercase;">Secure Connection</span>
+      </div>
+      <div style="color:#F1F5F9;font-size:20px;font-weight:700;line-height:1.3;">Submit a Tip</div>
+      <div style="color:#94A3B8;font-size:12px;line-height:1.6;">Your identity is protected. This form is encrypted end-to-end.</div>
+      <div style="background:#141E35;border:1px solid #1E2A45;border-radius:8px;padding:10px;">
+        <div style="color:#64748B;font-size:10px;margin-bottom:6px;">Your message</div>
+        <div style="height:40px;background:#0F1629;border-radius:4px;"></div>
+      </div>
+      <div style="background:#E53935;border-radius:6px;padding:8px 14px;color:#fff;font-size:12px;font-weight:600;width:fit-content;">Submit Securely →</div>
+    </div>
+    <div class="card-body">
+      <h3>Dark Minimal</h3>
+      <p>Deep dark backgrounds, muted text, red accent. Feels secure, serious, anonymous. Like a vault.</p>
+    </div>
+  </div>
+
+  <!-- Option B: Light Editorial -->
+  <div class="card" data-choice="light-editorial" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#FFFAF5;padding:20px;font-family:Georgia,serif;min-height:200px;display:flex;flex-direction:column;gap:12px;border-bottom:1px solid #EDE5D8;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+        <div style="width:8px;height:8px;border-radius:50%;background:#10B981;"></div>
+        <span style="color:#6B6560;font-size:11px;letter-spacing:.08em;text-transform:uppercase;font-family:system-ui;">Secure Connection</span>
+      </div>
+      <div style="color:#2A2420;font-size:20px;font-weight:700;line-height:1.3;font-family:system-ui;">Submit a Tip</div>
+      <div style="color:#6B6560;font-size:12px;line-height:1.6;font-family:system-ui;">Your identity is protected. This form is encrypted end-to-end.</div>
+      <div style="background:#fff;border:1px solid #EDE5D8;border-radius:8px;padding:10px;">
+        <div style="color:#6B6560;font-size:10px;margin-bottom:6px;font-family:system-ui;">Your message</div>
+        <div style="height:40px;background:#FFFBF8;border-radius:4px;border:1px solid #EDE5D8;"></div>
+      </div>
+      <div style="background:#E53935;border-radius:6px;padding:8px 14px;color:#fff;font-size:12px;font-weight:600;width:fit-content;font-family:system-ui;">Submit Securely →</div>
+    </div>
+    <div class="card-body">
+      <h3>Light Editorial</h3>
+      <p>Warm cream tones, clean type, red accent. Feels trustworthy, journalistic, approachable.</p>
+    </div>
+  </div>
+
+  <!-- Option C: Dark Editorial -->
+  <div class="card" data-choice="dark-editorial" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#0F1629;padding:20px;font-family:system-ui;min-height:200px;display:flex;flex-direction:column;gap:12px;">
+      <div style="border-bottom:2px solid #E53935;padding-bottom:8px;margin-bottom:4px;display:flex;justify-content:space-between;align-items:center;">
+        <span style="color:#F1F5F9;font-weight:700;font-size:13px;letter-spacing:.05em;">SECURE NEWSROOM</span>
+        <div style="width:6px;height:6px;border-radius:50%;background:#10B981;"></div>
+      </div>
+      <div style="color:#F1F5F9;font-size:18px;font-weight:700;line-height:1.3;">Submit a Tip</div>
+      <div style="color:#94A3B8;font-size:12px;line-height:1.6;">End-to-end encrypted. No logs. Your identity stays yours.</div>
+      <div style="background:#141E35;border:1px solid #2A3A58;border-radius:8px;padding:10px;">
+        <div style="color:#64748B;font-size:10px;margin-bottom:6px;">Your message</div>
+        <div style="height:40px;background:#0A0E1A;border-radius:4px;"></div>
+      </div>
+      <div style="background:transparent;border:1px solid #E53935;border-radius:6px;padding:8px 14px;color:#E53935;font-size:12px;font-weight:600;width:fit-content;">Submit Securely →</div>
+    </div>
+    <div class="card-body">
+      <h3>Dark Editorial</h3>
+      <p>Dark navy, red accent with outline button style. Feels like a serious publication — investigative, credible.</p>
+    </div>
+  </div>
+
+</div>

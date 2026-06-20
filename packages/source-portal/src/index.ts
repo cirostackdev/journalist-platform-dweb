@@ -1,7 +1,7 @@
 import express from "express"
 import { createInterface } from "readline"
 import { existsSync, readFileSync, writeFileSync, mkdirSync } from "fs"
-import { randomBytes } from "crypto"
+import { randomBytes, createHash } from "crypto"
 import { join } from "path"
 import { deriveMasterKey, generateDEK } from "@journalist/shared/crypto"
 import { openDb } from "./db"
@@ -56,7 +56,17 @@ async function main() {
   const db = openDb(DB_PATH)
   startReplyConsumer({ db, queueDir: TO_PORTAL_QUEUE_DIR, queueKey })
   const submitLimiter = createRateLimiter({ maxRequests: 5, windowMs: 60_000 })
-  const checkinLimiter = createRateLimiter({ maxRequests: 10, windowMs: 60_000 })
+  const checkinLimiter = createRateLimiter({
+    maxRequests: 10,
+    windowMs: 60_000,
+    keyExtractor: (req) => {
+      const codename = req.body?.codename
+      if (typeof codename === "string" && codename.length > 0) {
+        return createHash("sha256").update(codename).digest("hex")
+      }
+      return req.ip ?? "unknown"
+    },
+  })
 
   const app = express()
   app.use(express.json({ limit: "1mb" }))

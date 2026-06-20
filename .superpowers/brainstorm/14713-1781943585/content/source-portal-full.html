@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Source Portal — Full Mockup</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #060B14; color: #F1F5F9; font-family: system-ui, -apple-system, sans-serif; min-height: 100vh; }
+
+  /* ── Layout ── */
+  .page { max-width: 520px; margin: 0 auto; padding: 40px 20px 80px; }
+
+  /* ── Header ── */
+  .site-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 0 32px; border-bottom: 1px solid #1E2A45; margin-bottom: 48px; }
+  .logo { display: flex; align-items: center; gap: 8px; }
+  .logo-dot { width: 9px; height: 9px; border-radius: 50%; background: #10B981; box-shadow: 0 0 8px #10B981aa; }
+  .logo-text { font-size: 12px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: #10B981; }
+  .nav-link { font-size: 12px; color: #64748B; text-decoration: none; border: 1px solid #1E2A45; border-radius: 20px; padding: 5px 14px; transition: color .2s, border-color .2s; }
+  .nav-link:hover { color: #94A3B8; border-color: #2A3A58; }
+
+  /* ── Hero ── */
+  .hero { text-align: center; margin-bottom: 48px; }
+  .hero-icon { width: 52px; height: 52px; border-radius: 50%; border: 2px solid #10B981; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; }
+  .hero-icon-inner { width: 12px; height: 12px; border-radius: 50%; background: #10B981; box-shadow: 0 0 10px #10B981; }
+  .hero-title { font-size: 28px; font-weight: 800; letter-spacing: -.02em; line-height: 1.2; margin-bottom: 12px; }
+  .hero-subtitle { font-size: 14px; color: #64748B; line-height: 1.7; max-width: 360px; margin: 0 auto 28px; }
+  .cta-row { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+  .btn-primary { background: #10B981; color: #060B14; font-size: 13px; font-weight: 700; padding: 10px 22px; border-radius: 8px; border: none; cursor: pointer; letter-spacing: .02em; }
+  .btn-outline { background: transparent; color: #94A3B8; font-size: 13px; border: 1px solid #2A3A58; padding: 10px 22px; border-radius: 8px; cursor: pointer; }
+
+  /* ── How it works ── */
+  .guide { margin-bottom: 48px; }
+  .guide-title { font-size: 11px; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: .1em; margin-bottom: 16px; }
+  .steps { display: flex; flex-direction: column; gap: 0; }
+  .step { display: flex; gap: 14px; align-items: flex-start; padding: 14px 0; border-bottom: 1px solid #111827; }
+  .step:last-child { border-bottom: none; }
+  .step-num { width: 24px; height: 24px; border-radius: 50%; background: #0F1F14; border: 1px solid #10B981; color: #10B981; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; }
+  .step-body { flex: 1; }
+  .step-label { font-size: 13px; font-weight: 600; color: #E2E8F0; margin-bottom: 3px; }
+  .step-desc { font-size: 12px; color: #64748B; line-height: 1.6; }
+
+  /* ── Form card ── */
+  .form-card { background: #0D1524; border: 1px solid #1E2A45; border-radius: 14px; padding: 24px; margin-bottom: 16px; }
+  .form-section-title { font-size: 16px; font-weight: 700; color: #F1F5F9; margin-bottom: 6px; }
+  .form-section-sub { font-size: 12px; color: #64748B; margin-bottom: 20px; line-height: 1.6; }
+  .field { margin-bottom: 16px; }
+  .field-label { font-size: 11px; font-weight: 600; color: #64748B; text-transform: uppercase; letter-spacing: .07em; margin-bottom: 6px; display: block; }
+  textarea, input[type=text], input[type=password] {
+    width: 100%; background: #060B14; border: 1px solid #1E2A45; border-radius: 8px;
+    color: #F1F5F9; font-size: 13px; padding: 10px 12px; outline: none; font-family: inherit;
+    transition: border-color .2s;
+  }
+  textarea:focus, input:focus { border-color: #10B981; }
+  textarea { resize: vertical; min-height: 100px; }
+  .upload-zone { border: 1px dashed #2A3A58; border-radius: 8px; padding: 18px; text-align: center; cursor: pointer; transition: border-color .2s; }
+  .upload-zone:hover { border-color: #10B981; }
+  .upload-icon { font-size: 20px; margin-bottom: 6px; opacity: .4; }
+  .upload-text { font-size: 12px; color: #64748B; }
+  .passphrase-hint { font-size: 11px; color: #64748B; margin-top: 6px; line-height: 1.5; }
+  .submit-btn { width: 100%; background: #10B981; color: #060B14; font-size: 14px; font-weight: 700; padding: 12px; border-radius: 8px; border: none; cursor: pointer; margin-top: 6px; letter-spacing: .02em; }
+
+  /* ── Security note ── */
+  .security-note { display: flex; gap: 10px; align-items: flex-start; background: #0A150E; border: 1px solid #10B98125; border-radius: 10px; padding: 12px 14px; }
+  .security-note-icon { color: #10B981; font-size: 14px; flex-shrink: 0; margin-top: 1px; }
+  .security-note-text { font-size: 11px; color: #64748B; line-height: 1.6; }
+
+  /* ── Success screen ── */
+  .success-card { background: #0D1524; border: 1px solid #10B98140; border-radius: 14px; padding: 28px 24px; text-align: center; }
+  .success-icon { width: 48px; height: 48px; border-radius: 50%; background: #0A150E; border: 2px solid #10B981; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; font-size: 20px; }
+  .success-title { font-size: 17px; font-weight: 700; color: #F1F5F9; margin-bottom: 8px; }
+  .success-sub { font-size: 12px; color: #64748B; margin-bottom: 20px; line-height: 1.6; }
+  .codename-display { background: #060B14; border: 1px solid #10B981; border-radius: 10px; padding: 16px; margin-bottom: 16px; }
+  .codename-label { font-size: 10px; color: #64748B; text-transform: uppercase; letter-spacing: .1em; margin-bottom: 8px; }
+  .codename-words { font-size: 22px; font-weight: 800; color: #10B981; letter-spacing: .04em; font-family: monospace; }
+  .codename-warning { font-size: 11px; color: #F59E0B; background: #F59E0B10; border: 1px solid #F59E0B25; border-radius: 8px; padding: 10px 12px; line-height: 1.6; }
+
+  /* ── Divider ── */
+  .section-divider { border: none; border-top: 1px solid #111827; margin: 48px 0; }
+
+  /* ── Tabs for mockup sections ── */
+  .tab-bar { display: flex; gap: 4px; background: #0D1524; border: 1px solid #1E2A45; border-radius: 10px; padding: 4px; margin-bottom: 24px; }
+  .tab { flex: 1; text-align: center; padding: 7px 10px; border-radius: 7px; font-size: 11px; font-weight: 600; color: #64748B; cursor: pointer; }
+  .tab.active { background: #10B98120; color: #10B981; }
+
+  .mockup-label { font-size: 10px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: #2A3A58; text-align: center; margin-bottom: 28px; }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ─── PAGE 1: SUBMIT ─────────────────────────────── -->
+  <p class="mockup-label">↓ Page 1 — Source Portal Home / Submit</p>
+
+  <header class="site-header">
+    <div class="logo">
+      <div class="logo-dot"></div>
+      <span class="logo-text">Secure Newsroom</span>
+    </div>
+    <a href="#checkin-section" class="nav-link">Check In →</a>
+  </header>
+
+  <!-- Hero -->
+  <div class="hero">
+    <div class="hero-icon"><div class="hero-icon-inner"></div></div>
+    <h1 class="hero-title">Share What You Know</h1>
+    <p class="hero-subtitle">Submit documents, files, or messages anonymously. No account. No tracking. End-to-end encrypted over Tor.</p>
+    <div class="cta-row">
+      <button class="btn-primary">Submit a Tip</button>
+      <button class="btn-outline">Check In</button>
+    </div>
+  </div>
+
+  <!-- How it works -->
+  <div class="guide">
+    <p class="guide-title">How it works</p>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <div class="step-label">Submit anonymously</div>
+          <div class="step-desc">Type your message or attach documents. Optionally set a passphrase for extra security.</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <div class="step-label">Save your codename</div>
+          <div class="step-desc">You'll receive a unique 3-word codename. Write it down — it's your only way back.</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <div class="step-label">Check for replies</div>
+          <div class="step-desc">Return here and enter your codename to read encrypted journalist responses.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Submit form (revealed after clicking CTA) -->
+  <div class="form-card">
+    <div class="form-section-title">Submit a Tip</div>
+    <div class="form-section-sub">All fields are optional except at least a message or file.</div>
+
+    <div class="field">
+      <label class="field-label">Message</label>
+      <textarea placeholder="Describe what you know…"></textarea>
+    </div>
+
+    <div class="field">
+      <label class="field-label">Files (optional)</label>
+      <div class="upload-zone">
+        <div class="upload-icon">📎</div>
+        <div class="upload-text">Drag files here or click to browse<br><span style="color:#2A3A58">Max 256 MB per file · up to 10 files</span></div>
+      </div>
+    </div>
+
+    <div class="field">
+      <label class="field-label">Passphrase (optional)</label>
+      <input type="password" placeholder="Set a passphrase for added security">
+      <p class="passphrase-hint">If set, you must enter it every time you check in.</p>
+    </div>
+
+    <button class="submit-btn">Submit Securely →</button>
+  </div>
+
+  <div class="security-note">
+    <span class="security-note-icon">🔒</span>
+    <p class="security-note-text">Your submission is encrypted with a key only the newsroom holds. This site runs exclusively over Tor — no IP addresses are logged.</p>
+  </div>
+
+  <!-- ─── SUCCESS SCREEN ─────────────────────────────── -->
+  <hr class="section-divider">
+  <p class="mockup-label">↓ After Submit — Codename Screen</p>
+
+  <div class="success-card">
+    <div class="success-icon">✓</div>
+    <div class="success-title">Submission Received</div>
+    <div class="success-sub">Your tip has been encrypted and delivered. Save your codename — you'll need it to check for replies.</div>
+    <div class="codename-display">
+      <div class="codename-label">Your Codename</div>
+      <div class="codename-words">river · amber · cliff</div>
+    </div>
+    <div class="codename-warning">⚠ Write this down now. It will not be shown again. Do not store it digitally.</div>
+  </div>
+
+  <!-- ─── PAGE 2: CHECK IN ─────────────────────────────── -->
+  <hr class="section-divider">
+  <p class="mockup-label" id="checkin-section">↓ Page 2 — Check In</p>
+
+  <header class="site-header">
+    <div class="logo">
+      <div class="logo-dot"></div>
+      <span class="logo-text">Secure Newsroom</span>
+    </div>
+    <a href="#" class="nav-link">Submit a Tip</a>
+  </header>
+
+  <div class="form-card">
+    <div class="form-section-title">Check In</div>
+    <div class="form-section-sub">Enter your codename to read replies from the newsroom.</div>
+
+    <div class="field">
+      <label class="field-label">Your Codename</label>
+      <input type="text" placeholder="word · word · word">
+    </div>
+
+    <div class="field">
+      <label class="field-label">Passphrase (if you set one)</label>
+      <input type="password" placeholder="Enter your passphrase">
+    </div>
+
+    <button class="submit-btn">Check In →</button>
+  </div>
+
+  <!-- Replies view (after successful check-in) -->
+  <hr class="section-divider">
+  <p class="mockup-label">↓ After Check-In — Replies View</p>
+
+  <div class="form-card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+      <div class="form-section-title" style="margin-bottom:0">Your Inbox</div>
+      <span style="font-size:11px;color:#10B981;background:#10B98115;border:1px solid #10B98130;border-radius:20px;padding:3px 10px;">1 reply</span>
+    </div>
+    <div style="border:1px solid #1E2A45;border-radius:10px;overflow:hidden;">
+      <div style="padding:14px 16px;border-bottom:1px solid #111827;">
+        <div style="font-size:10px;color:#64748B;margin-bottom:4px;">June 19, 2026 · From the newsroom</div>
+        <div style="font-size:13px;color:#E2E8F0;line-height:1.6;">Thank you for your submission. We have reviewed the documents and are investigating further. Can you provide any additional context about the timeline of events?</div>
+      </div>
+      <div style="padding:10px 16px;background:#060B14;">
+        <div style="font-size:11px;color:#64748B;">Submission #A7F3 · Received June 18, 2026</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

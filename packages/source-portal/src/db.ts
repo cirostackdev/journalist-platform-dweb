@@ -5,6 +5,7 @@ const SCHEMA = `
   CREATE TABLE IF NOT EXISTS sources (
     id TEXT PRIMARY KEY,
     codename_hash TEXT NOT NULL UNIQUE,
+    codename_hmac TEXT,
     passphrase_hash TEXT,
     created_at INTEGER NOT NULL
   );
@@ -55,7 +56,7 @@ export type Source = {
 export interface Db {
   close(): void
   query(sql: string): { get(): unknown; all(...args: unknown[]): unknown[] }
-  insertSource(codenameHash: string, passphraseHash?: string): string
+  insertSource(codenameHash: string, passphraseHash?: string, codenameHmac?: string): string
   insertSubmission(sourceId: string, encryptedText: string | null): string
   insertMessage(
     submissionId: string,
@@ -65,6 +66,7 @@ export interface Db {
   ): string
   getMessages(submissionId: string): Message[]
   getSourceByHash(codenameHash: string): { id: string } | null
+  getSourceByHmac(hmac: string): Source | null
 }
 
 export function openDb(path: string): Db {
@@ -72,6 +74,7 @@ export function openDb(path: string): Db {
   sqlite.exec("PRAGMA journal_mode = WAL;")
   sqlite.exec("PRAGMA foreign_keys = ON;")
   sqlite.exec(SCHEMA)
+  try { sqlite.exec("ALTER TABLE sources ADD COLUMN codename_hmac TEXT") } catch { /* already exists */ }
 
   return {
     close() {
@@ -80,11 +83,11 @@ export function openDb(path: string): Db {
     query(sql: string) {
       return sqlite.query(sql)
     },
-    insertSource(codenameHash: string, passphraseHash?: string): string {
+    insertSource(codenameHash: string, passphraseHash?: string, codenameHmac?: string): string {
       const id = randomUUID()
       sqlite
-        .query("INSERT INTO sources (id, codename_hash, passphrase_hash, created_at) VALUES (?, ?, ?, ?)")
-        .run(id, codenameHash, passphraseHash ?? null, Date.now())
+        .query("INSERT INTO sources (id, codename_hash, codename_hmac, passphrase_hash, created_at) VALUES (?, ?, ?, ?, ?)")
+        .run(id, codenameHash, codenameHmac ?? null, passphraseHash ?? null, Date.now())
       return id
     },
     insertSubmission(sourceId: string, encryptedText: string | null): string {
@@ -115,6 +118,11 @@ export function openDb(path: string): Db {
       return sqlite
         .query("SELECT id, codename_hash, passphrase_hash, created_at FROM sources WHERE codename_hash = ?")
         .get(codenameHash) as Source | null
+    },
+    getSourceByHmac(hmac: string): Source | null {
+      return sqlite
+        .query("SELECT id, codename_hash, passphrase_hash, created_at FROM sources WHERE codename_hmac = ?")
+        .get(hmac) as Source | null
     },
   }
 }

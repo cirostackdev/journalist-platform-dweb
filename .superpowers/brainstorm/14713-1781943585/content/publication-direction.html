@@ -1,0 +1,79 @@
+<h2>Publication Site — Design Direction</h2>
+<p class="subtitle">The static site where published articles are listed and read. Which feel is right?</p>
+
+<div class="cards">
+
+  <!-- Option A: Dark editorial (matches source portal) -->
+  <div class="card" data-choice="dark-match" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#0A0E1A;padding:20px;font-family:Georgia,serif;min-height:220px;display:flex;flex-direction:column;gap:10px;">
+      <div style="border-bottom:1px solid #1E2A45;padding-bottom:10px;display:flex;justify-content:space-between;align-items:center;">
+        <span style="color:#10B981;font-size:11px;font-family:system-ui;font-weight:700;letter-spacing:.1em;text-transform:uppercase;">The Newsroom</span>
+        <span style="color:#64748B;font-size:10px;font-family:system-ui;">3 articles</span>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px;margin-top:4px;">
+        <div style="border-bottom:1px solid #141E35;padding-bottom:10px;">
+          <div style="color:#64748B;font-size:10px;font-family:system-ui;margin-bottom:3px;">June 18, 2026</div>
+          <div style="color:#F1F5F9;font-size:14px;font-weight:700;line-height:1.3;margin-bottom:3px;">Leaked Documents Reveal Hidden Contracts</div>
+          <div style="color:#94A3B8;font-size:11px;line-height:1.5;">An investigation into undisclosed agreements spanning three governments...</div>
+        </div>
+        <div>
+          <div style="color:#64748B;font-size:10px;font-family:system-ui;margin-bottom:3px;">June 12, 2026</div>
+          <div style="color:#F1F5F9;font-size:14px;font-weight:600;line-height:1.3;">The Data That Disappeared</div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>Dark Editorial</h3>
+      <p>Matches the source portal. Unified dark look across both sites. Serious, consistent brand.</p>
+    </div>
+  </div>
+
+  <!-- Option B: Light newspaper -->
+  <div class="card" data-choice="light-newspaper" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#FFFAF5;padding:20px;font-family:Georgia,serif;min-height:220px;display:flex;flex-direction:column;gap:10px;border-bottom:1px solid #EDE5D8;">
+      <div style="border-bottom:2px solid #2A2420;padding-bottom:10px;display:flex;justify-content:space-between;align-items:center;">
+        <span style="color:#2A2420;font-size:14px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;">The Newsroom</span>
+        <div style="width:8px;height:8px;border-radius:50%;background:#10B981;"></div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px;margin-top:4px;">
+        <div style="border-bottom:1px solid #EDE5D8;padding-bottom:10px;">
+          <div style="color:#6B6560;font-size:10px;font-family:system-ui;margin-bottom:3px;">June 18, 2026</div>
+          <div style="color:#2A2420;font-size:15px;font-weight:800;line-height:1.3;margin-bottom:3px;">Leaked Documents Reveal Hidden Contracts</div>
+          <div style="color:#6B6560;font-size:11px;line-height:1.5;font-family:system-ui;">An investigation into undisclosed agreements spanning three governments...</div>
+        </div>
+        <div>
+          <div style="color:#6B6560;font-size:10px;font-family:system-ui;margin-bottom:3px;">June 12, 2026</div>
+          <div style="color:#2A2420;font-size:14px;font-weight:700;line-height:1.3;">The Data That Disappeared</div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>Light Newspaper</h3>
+      <p>Warm cream from FG. Classic editorial feel — like a broadsheet. High readability for articles.</p>
+    </div>
+  </div>
+
+  <!-- Option C: Dark with light article pages -->
+  <div class="card" data-choice="dark-index-light-article" onclick="toggleSelect(this)">
+    <div class="card-image" style="min-height:220px;display:flex;flex-direction:column;">
+      <!-- Top half: dark index -->
+      <div style="background:#0F1629;padding:14px 20px;flex:1;font-family:system-ui;">
+        <div style="color:#64748B;font-size:9px;text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px;">Index (dark)</div>
+        <div style="color:#10B981;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px;">The Newsroom</div>
+        <div style="color:#F1F5F9;font-size:13px;font-weight:700;margin-bottom:3px;">Leaked Documents Reveal Hidden Contracts</div>
+        <div style="color:#64748B;font-size:10px;">June 18, 2026</div>
+      </div>
+      <!-- Bottom half: light article -->
+      <div style="background:#FFFAF5;padding:14px 20px;flex:1;font-family:Georgia,serif;border-top:2px solid #10B981;">
+        <div style="color:#6B6560;font-size:9px;font-family:system-ui;text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px;">Article page (light)</div>
+        <div style="color:#2A2420;font-size:13px;font-weight:800;line-height:1.3;margin-bottom:5px;">Leaked Documents Reveal Hidden Contracts</div>
+        <div style="color:#6B6560;font-size:11px;line-height:1.5;">An investigation into undisclosed agreements spanning three governments and two decades of cover-up...</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>Dark Index / Light Articles</h3>
+      <p>Dark landing page for browsing, light reading view for articles. Best of both worlds for legibility.</p>
+    </div>
+  </div>
+
+</div>

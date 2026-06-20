@@ -1,0 +1,102 @@
+<h2>Source Portal — Page Layout</h2>
+<p class="subtitle">How should the submission flow be structured? All use dark minimal + green.</p>
+
+<div class="cards">
+
+  <!-- Option A: Single page, steps -->
+  <div class="card" data-choice="single-page-steps" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#0A0E1A;padding:18px;font-family:system-ui;min-height:260px;display:flex;flex-direction:column;gap:10px;">
+      <!-- Header -->
+      <div style="display:flex;align-items:center;gap:8px;border-bottom:1px solid #1E2A45;padding-bottom:10px;">
+        <div style="width:8px;height:8px;border-radius:50%;background:#10B981;"></div>
+        <span style="color:#10B981;font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;">Secure Newsroom</span>
+      </div>
+      <!-- Step indicators -->
+      <div style="display:flex;gap:6px;align-items:center;">
+        <div style="width:20px;height:20px;border-radius:50%;background:#10B981;color:#0A0E1A;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;">1</div>
+        <div style="flex:1;height:1px;background:#1E2A45;"></div>
+        <div style="width:20px;height:20px;border-radius:50%;border:1px solid #2A3A58;color:#64748B;font-size:10px;display:flex;align-items:center;justify-content:center;">2</div>
+        <div style="flex:1;height:1px;background:#1E2A45;"></div>
+        <div style="width:20px;height:20px;border-radius:50%;border:1px solid #2A3A58;color:#64748B;font-size:10px;display:flex;align-items:center;justify-content:center;">3</div>
+      </div>
+      <!-- Step content -->
+      <div style="color:#F1F5F9;font-size:14px;font-weight:700;">Step 1 — How it works</div>
+      <div style="background:#141E35;border:1px solid #1E2A45;border-radius:8px;padding:10px;display:flex;flex-direction:column;gap:6px;">
+        <div style="display:flex;gap:8px;align-items:flex-start;">
+          <div style="width:16px;height:16px;border-radius:50%;background:#10B981;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;"><span style="color:#0A0E1A;font-size:9px;font-weight:700;">✓</span></div>
+          <span style="color:#94A3B8;font-size:11px;line-height:1.5;">Submit text or files anonymously</span>
+        </div>
+        <div style="display:flex;gap:8px;align-items:flex-start;">
+          <div style="width:16px;height:16px;border-radius:50%;background:#10B981;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;"><span style="color:#0A0E1A;font-size:9px;font-weight:700;">✓</span></div>
+          <span style="color:#94A3B8;font-size:11px;line-height:1.5;">Receive a 3-word codename</span>
+        </div>
+        <div style="display:flex;gap:8px;align-items:flex-start;">
+          <div style="width:16px;height:16px;border-radius:50%;background:#10B981;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;"><span style="color:#0A0E1A;font-size:9px;font-weight:700;">✓</span></div>
+          <span style="color:#94A3B8;font-size:11px;line-height:1.5;">Use codename to check replies</span>
+        </div>
+      </div>
+      <div style="background:#10B981;border-radius:6px;padding:7px 14px;color:#0A0E1A;font-size:11px;font-weight:700;width:fit-content;">Next →</div>
+    </div>
+    <div class="card-body">
+      <h3>Single Page, Guided Steps</h3>
+      <p>One page with a 3-step wizard: (1) Intro, (2) Write message + upload, (3) Receive codename. No page navigation.</p>
+    </div>
+  </div>
+
+  <!-- Option B: Separate pages -->
+  <div class="card" data-choice="separate-pages" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#0A0E1A;padding:18px;font-family:system-ui;min-height:260px;display:flex;flex-direction:column;gap:8px;">
+      <!-- Nav -->
+      <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #1E2A45;padding-bottom:10px;">
+        <span style="color:#10B981;font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;">Secure Newsroom</span>
+        <div style="display:flex;gap:12px;">
+          <span style="color:#94A3B8;font-size:10px;border-bottom:1px solid #10B981;padding-bottom:1px;">Submit</span>
+          <span style="color:#64748B;font-size:10px;">Check In</span>
+        </div>
+      </div>
+      <!-- Submit page content -->
+      <div style="color:#F1F5F9;font-size:15px;font-weight:700;margin-top:2px;">Submit a Tip</div>
+      <div style="color:#64748B;font-size:10px;line-height:1.5;">Your submission is encrypted. We cannot identify you.</div>
+      <div style="background:#141E35;border:1px solid #1E2A45;border-radius:6px;padding:8px;">
+        <div style="color:#64748B;font-size:9px;margin-bottom:5px;text-transform:uppercase;letter-spacing:.06em;">Message</div>
+        <div style="height:36px;background:#0F1629;border-radius:4px;"></div>
+      </div>
+      <div style="background:#141E35;border:1px solid #1E2A45;border-radius:6px;padding:8px;display:flex;align-items:center;gap:8px;">
+        <div style="width:16px;height:16px;border:1px dashed #2A3A58;border-radius:4px;"></div>
+        <span style="color:#64748B;font-size:10px;">Attach files (optional)</span>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <div style="background:#10B981;border-radius:5px;padding:6px 12px;color:#0A0E1A;font-size:10px;font-weight:700;">Submit</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>Separate Pages with Nav</h3>
+      <p>Two pages: <code>/submit</code> and <code>/checkin</code>, linked by a top nav. Simpler, faster to reach each action.</p>
+    </div>
+  </div>
+
+  <!-- Option C: Centered hero + modal-style form -->
+  <div class="card" data-choice="hero-centered" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#0A0E1A;padding:18px;font-family:system-ui;min-height:260px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center;">
+      <div style="width:36px;height:36px;border-radius:50%;border:2px solid #10B981;display:flex;align-items:center;justify-content:center;">
+        <div style="width:10px;height:10px;border-radius:50%;background:#10B981;"></div>
+      </div>
+      <div style="color:#F1F5F9;font-size:16px;font-weight:800;letter-spacing:-.01em;">Secure Newsroom</div>
+      <div style="color:#64748B;font-size:10px;max-width:200px;line-height:1.6;">Anonymous, encrypted submissions. No logs. No tracking.</div>
+      <div style="display:flex;gap:8px;margin-top:4px;">
+        <div style="background:#10B981;border-radius:6px;padding:7px 14px;color:#0A0E1A;font-size:11px;font-weight:700;">Submit a Tip</div>
+        <div style="border:1px solid #2A3A58;border-radius:6px;padding:7px 14px;color:#94A3B8;font-size:11px;">Check In</div>
+      </div>
+      <!-- small form card below -->
+      <div style="background:#141E35;border:1px solid #1E2A45;border-radius:8px;padding:12px;width:100%;margin-top:4px;">
+        <div style="height:28px;background:#0F1629;border-radius:4px;margin-bottom:6px;"></div>
+        <div style="background:#10B981;border-radius:5px;padding:5px 10px;color:#0A0E1A;font-size:10px;font-weight:700;width:fit-content;">Submit →</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>Centered Hero + Inline Form</h3>
+      <p>Landing page with logo, tagline, and two CTAs. Clicking "Submit" reveals the form inline. Dramatic, focused.</p>
+    </div>
+  </div>
+
+</div>

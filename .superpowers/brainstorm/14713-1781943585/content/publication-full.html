@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Publication Site — Full Mockup</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #060B14; color: #F1F5F9; font-family: system-ui, -apple-system, sans-serif; }
+
+  .page { max-width: 680px; margin: 0 auto; padding: 40px 20px 80px; }
+
+  /* ── Header ── */
+  .site-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 0 28px; border-bottom: 1px solid #1E2A45; margin-bottom: 48px; }
+  .logo { display: flex; align-items: center; gap: 8px; }
+  .logo-dot { width: 9px; height: 9px; border-radius: 50%; background: #10B981; box-shadow: 0 0 8px #10B981aa; flex-shrink:0; }
+  .logo-text { font-size: 12px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: #10B981; }
+  .header-meta { font-size: 11px; color: #2A3A58; }
+
+  /* ── Index hero ── */
+  .index-hero { margin-bottom: 40px; }
+  .index-hero-label { font-size: 10px; font-weight: 700; color: #10B981; text-transform: uppercase; letter-spacing: .12em; margin-bottom: 10px; }
+  .index-hero-title { font-size: 32px; font-weight: 800; line-height: 1.15; letter-spacing: -.02em; color: #F1F5F9; margin-bottom: 10px; }
+  .index-hero-sub { font-size: 14px; color: #64748B; line-height: 1.7; }
+
+  /* ── Article list ── */
+  .article-list { display: flex; flex-direction: column; gap: 0; }
+  .article-item { display: flex; gap: 20px; padding: 22px 0; border-bottom: 1px solid #111827; align-items: flex-start; }
+  .article-item:first-child { border-top: 1px solid #111827; }
+  .article-num { font-size: 11px; color: #2A3A58; font-family: monospace; font-weight: 700; padding-top: 3px; min-width: 20px; }
+  .article-body { flex: 1; }
+  .article-date { font-size: 11px; color: #64748B; margin-bottom: 5px; }
+  .article-title { font-size: 17px; font-weight: 700; color: #F1F5F9; line-height: 1.3; margin-bottom: 6px; cursor: pointer; transition: color .2s; }
+  .article-title:hover { color: #10B981; }
+  .article-excerpt { font-size: 13px; color: #64748B; line-height: 1.65; }
+  .article-read { font-size: 11px; color: #10B981; margin-top: 10px; display: inline-flex; align-items: center; gap: 4px; }
+
+  /* ── Footer ── */
+  .site-footer { margin-top: 64px; padding-top: 24px; border-top: 1px solid #111827; display: flex; justify-content: space-between; align-items: center; }
+  .footer-text { font-size: 11px; color: #2A3A58; }
+
+  /* ── Divider between pages ── */
+  .page-break { border: none; border-top: 2px dashed #1E2A45; margin: 60px 0; }
+  .mockup-label { font-size: 10px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: #2A3A58; text-align: center; margin-bottom: 32px; }
+
+  /* ── Article page ── */
+  .progress-bar { position: sticky; top: 0; height: 2px; background: #111827; margin-bottom: 0; }
+  .progress-fill { height: 100%; width: 35%; background: #10B981; }
+
+  .article-header { margin-bottom: 36px; padding-bottom: 28px; border-bottom: 1px solid #1E2A45; }
+  .article-back { font-size: 11px; color: #64748B; display: flex; align-items: center; gap-6px; margin-bottom: 20px; cursor: pointer; }
+  .article-back:hover { color: #94A3B8; }
+  .article-kicker { font-size: 10px; font-weight: 700; color: #10B981; text-transform: uppercase; letter-spacing: .12em; margin-bottom: 12px; }
+  .article-h1 { font-size: 30px; font-weight: 800; line-height: 1.2; letter-spacing: -.02em; color: #F1F5F9; margin-bottom: 14px; }
+  .article-meta-row { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+  .article-byline { font-size: 12px; color: #64748B; }
+  .article-dateline { font-size: 12px; color: #2A3A58; }
+  .article-dot { width: 3px; height: 3px; border-radius: 50%; background: #2A3A58; }
+
+  /* ── Article body ── */
+  .article-content { font-family: Georgia, 'Times New Roman', serif; font-size: 17px; line-height: 1.8; color: #CBD5E1; max-width: 620px; }
+  .article-content p { margin-bottom: 1.5em; }
+  .article-content .lede { font-size: 19px; color: #E2E8F0; font-weight: 400; line-height: 1.7; margin-bottom: 2em; border-left: 3px solid #10B981; padding-left: 18px; }
+  .article-content h2 { font-family: system-ui; font-size: 18px; font-weight: 700; color: #F1F5F9; margin: 2em 0 .8em; letter-spacing: -.01em; }
+  .article-content blockquote { border-left: 3px solid #10B981; padding: 12px 18px; background: #0A150E; border-radius: 0 8px 8px 0; margin: 1.5em 0; }
+  .article-content blockquote p { color: #94A3B8; font-style: italic; margin-bottom: 0; font-size: 16px; }
+
+  .article-footer { margin-top: 48px; padding-top: 24px; border-top: 1px solid #1E2A45; display: flex; justify-content: space-between; align-items: center; }
+  .article-footer-text { font-size: 11px; color: #2A3A58; line-height: 1.6; }
+  .back-btn { font-size: 12px; color: #10B981; border: 1px solid #10B98130; border-radius: 6px; padding: 7px 14px; cursor: pointer; }
+</style>
+</head>
+<body>
+
+<!-- ════════════════════════════════════════
+     PAGE 1 — INDEX
+════════════════════════════════════════ -->
+<div class="page">
+  <p class="mockup-label">↓ Publication Site — Index Page</p>
+
+  <header class="site-header">
+    <div class="logo">
+      <div class="logo-dot"></div>
+      <span class="logo-text">The Newsroom</span>
+    </div>
+    <span class="header-meta">Published via Tor · Encrypted</span>
+  </header>
+
+  <div class="index-hero">
+    <div class="index-hero-label">Investigative Journalism</div>
+    <h1 class="index-hero-title">Published Reports</h1>
+    <p class="index-hero-sub">Independently verified reporting sourced through encrypted, anonymous submissions.</p>
+  </div>
+
+  <div class="article-list">
+
+    <div class="article-item">
+      <div class="article-num">01</div>
+      <div class="article-body">
+        <div class="article-date">June 18, 2026</div>
+        <div class="article-title">Leaked Documents Reveal Hidden Contracts Between State Officials and Private Contractors</div>
+        <div class="article-excerpt">An 18-month investigation into undisclosed agreements spanning three governments, two shell companies, and nearly $400 million in unaccounted public funds.</div>
+        <span class="article-read">Read report →</span>
+      </div>
+    </div>
+
+    <div class="article-item">
+      <div class="article-num">02</div>
+      <div class="article-body">
+        <div class="article-date">June 12, 2026</div>
+        <div class="article-title">The Data That Disappeared: How a Public Health Database Was Quietly Purged</div>
+        <div class="article-excerpt">Internal records obtained by our newsroom show systematic deletion of adverse event data from a national health registry over a four-year period.</div>
+        <span class="article-read">Read report →</span>
+      </div>
+    </div>
+
+    <div class="article-item">
+      <div class="article-num">03</div>
+      <div class="article-body">
+        <div class="article-date">May 29, 2026</div>
+        <div class="article-title">Surveillance Without Warrant: The Domestic Program No One Voted For</div>
+        <div class="article-excerpt">Classified technical specifications, provided by a source within the program, detail a bulk collection operation operating entirely outside judicial oversight.</div>
+        <span class="article-read">Read report →</span>
+      </div>
+    </div>
+
+  </div>
+
+  <footer class="site-footer">
+    <span class="footer-text">All reports verified and published by the newsroom.<br>This site is only accessible over Tor.</span>
+    <div style="display:flex;align-items:center;gap:6px;">
+      <div style="width:6px;height:6px;border-radius:50%;background:#10B981;"></div>
+      <span style="font-size:10px;color:#10B981;font-weight:600;">Live</span>
+    </div>
+  </footer>
+</div>
+
+<!-- ════════════════════════════════════════
+     PAGE 2 — ARTICLE
+════════════════════════════════════════ -->
+<div style="background:#0A0F1A;">
+  <div class="progress-bar"><div class="progress-fill"></div></div>
+</div>
+
+<div class="page">
+  <p class="mockup-label" style="margin-top:16px;">↓ Article Page</p>
+
+  <header class="site-header">
+    <div class="logo">
+      <div class="logo-dot"></div>
+      <span class="logo-text">The Newsroom</span>
+    </div>
+    <span class="header-meta">← All reports</span>
+  </header>
+
+  <div class="article-header">
+    <div class="article-kicker">Investigation · June 18, 2026</div>
+    <h1 class="article-h1">Leaked Documents Reveal Hidden Contracts Between State Officials and Private Contractors</h1>
+    <div class="article-meta-row">
+      <span class="article-byline">The Newsroom</span>
+      <div class="article-dot"></div>
+      <span class="article-dateline">June 18, 2026</span>
+      <div class="article-dot"></div>
+      <span class="article-dateline" style="color:#10B981;">Verified</span>
+    </div>
+  </div>
+
+  <div class="article-content">
+    <p class="lede">For eighteen months, our journalists reviewed thousands of pages of internal documents obtained through anonymous, encrypted submissions. What emerged is a pattern of deliberate concealment spanning three administrations.</p>
+
+    <p>The contracts, dated between 2019 and 2024, were executed through a series of shell companies registered in Cyprus and the British Virgin Islands. None appear in any public procurement record. Multiple officials whose signatures appear on the documents declined to comment.</p>
+
+    <h2>What the Documents Show</h2>
+
+    <p>Among the files submitted were 847 digitally signed contract amendments, 23 internal memoranda marked "not for distribution," and a series of wire transfer confirmations totalling $387 million.</p>
+
+    <blockquote>
+      <p>"We were told these were standard infrastructure contracts. No one asked questions. That was the point."</p>
+    </blockquote>
+
+    <p>Independent forensic accountants retained by the newsroom confirmed the authenticity of the financial records. Three former officials, speaking on condition of anonymity, corroborated the timeline described in the documents.</p>
+
+    <h2>The Response</h2>
+
+    <p>When presented with the findings, the Ministry of Finance issued a one-line statement: "We do not comment on internal procurement matters." Two of the private contractors named in the documents have since been dissolved.</p>
+  </div>
+
+  <div class="article-footer">
+    <div class="article-footer-text">
+      This report was produced using encrypted source submissions.<br>
+      Source materials are archived securely and cannot be disclosed.
+    </div>
+    <button class="back-btn">← All reports</button>
+  </div>
+</div>
+
+</body>
+</html>

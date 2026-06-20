@@ -1,6 +1,7 @@
 import { Router } from "express"
 import multer from "multer"
 import argon2 from "argon2"
+import { createHmac } from "crypto"
 import { readFileSync, writeFileSync, mkdirSync, unlinkSync } from "fs"
 import { join } from "path"
 import type { Db } from "../db"
@@ -51,7 +52,8 @@ export function createSubmitRouter(opts: SubmitRouterOptions): Router {
         parallelism: 1,
       })
 
-      const sourceId = opts.db.insertSource(codenameHash, passphraseHash)
+      const codenameHmac = createHmac("sha256", opts.masterKey).update(codename).digest("hex")
+      const sourceId = opts.db.insertSource(codenameHash, passphraseHash, codenameHmac)
 
       let encryptedText: string | null = null
       if (text) {

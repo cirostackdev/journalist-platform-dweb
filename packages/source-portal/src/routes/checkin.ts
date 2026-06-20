@@ -1,5 +1,6 @@
 import { Router } from "express"
 import argon2 from "argon2"
+import { createHmac } from "crypto"
 import type { Db } from "../db"
 import { decryptDEK, decryptData } from "@journalist/shared/crypto"
 
@@ -21,21 +22,31 @@ export function createCheckinRouter(opts: CheckinRouterOptions): Router {
     }
 
     try {
-      const sources = opts.db.query(
-        "SELECT id, codename_hash, passphrase_hash FROM sources"
-      ).all() as { id: string; codename_hash: string; passphrase_hash: string | null }[]
+      // Fast path: HMAC lookup (O(1))
+      const codenameHmac = createHmac("sha256", opts.masterKey).update(codename).digest("hex")
+      let source = opts.db.getSourceByHmac(codenameHmac)
 
-      let sourceId: string | null = null
-      let source: { id: string; codename_hash: string; passphrase_hash: string | null } | null = null
-      for (const s of sources) {
-        if (await argon2.verify(s.codename_hash, codename)) {
-          sourceId = s.id
-          source = s
-          break
+      // Slow fallback for legacy rows without codename_hmac (O(N))
+      if (!source) {
+        const sources = opts.db.query(
+          "SELECT id, codename_hash, passphrase_hash FROM sources WHERE codename_hmac IS NULL"
+        ).all() as { id: string; codename_hash: string; passphrase_hash: string | null }[]
+        for (const s of sources) {
+          if (await argon2.verify(s.codename_hash, codename)) {
+            source = s as any
+            break
+          }
         }
       }
 
-      if (!sourceId || !source) {
+      if (!source) {
+        await new Promise((r) => setTimeout(r, 500))
+        res.status(401).json({ error: "Invalid codename." })
+        return
+      }
+
+      // For the fast path (source found by HMAC), still do argon2 verify to confirm
+      if (!await argon2.verify(source.codename_hash, codename)) {
         await new Promise((r) => setTimeout(r, 500))
         res.status(401).json({ error: "Invalid codename." })
         return
@@ -56,7 +67,7 @@ export function createCheckinRouter(opts: CheckinRouterOptions): Router {
 
       const submissions = opts.db.query(
         "SELECT id FROM submissions WHERE source_id = ?"
-      ).all(sourceId) as { id: string }[]
+      ).all(source.id) as { id: string }[]
 
       const decryptedMessages: { direction: string; body: string; created_at: number }[] = []
 

@@ -1,0 +1,83 @@
+<h2>Passphrase — User-set vs Auto-generated</h2>
+<p class="subtitle">Should the passphrase be randomly generated like the codename, or chosen by the source?</p>
+
+<div class="split">
+
+  <!-- Option A: Current — user-set, optional -->
+  <div class="mockup">
+    <div class="mockup-header">A — User-set (current)</div>
+    <div class="mockup-body" style="background:#060B14;font-family:system-ui;display:flex;flex-direction:column;gap:12px;padding:16px;">
+
+      <div style="font-size:12px;color:#F1F5F9;font-weight:600;">Submit Form</div>
+
+      <div style="background:#0D1524;border:1px solid #1E2A45;border-radius:8px;padding:12px;display:flex;flex-direction:column;gap:8px;">
+        <div>
+          <div style="font-size:9px;color:#64748B;text-transform:uppercase;letter-spacing:.07em;margin-bottom:4px;">Message</div>
+          <div style="height:36px;background:#060B14;border:1px solid #1E2A45;border-radius:6px;"></div>
+        </div>
+        <div>
+          <div style="font-size:9px;color:#64748B;text-transform:uppercase;letter-spacing:.07em;margin-bottom:4px;">Passphrase <span style="color:#2A3A58;">(optional)</span></div>
+          <div style="height:28px;background:#060B14;border:1px solid #1E2A45;border-radius:6px;"></div>
+          <div style="font-size:9px;color:#2A3A58;margin-top:3px;">Source chooses this — could be "123456"</div>
+        </div>
+        <div style="background:#10B981;border-radius:6px;padding:7px;color:#060B14;font-size:10px;font-weight:700;text-align:center;">Submit →</div>
+      </div>
+
+      <div style="font-size:12px;color:#F1F5F9;font-weight:600;margin-top:4px;">After Submit</div>
+      <div style="background:#0D1524;border:1px solid #10B98130;border-radius:8px;padding:12px;text-align:center;">
+        <div style="font-size:9px;color:#64748B;margin-bottom:4px;">CODENAME</div>
+        <div style="font-size:16px;font-weight:800;color:#10B981;font-family:monospace;">river · amber · cliff</div>
+        <div style="margin-top:8px;font-size:9px;color:#64748B;font-style:italic;">Passphrase: whatever they typed (or none)</div>
+      </div>
+
+      <div style="background:#EF444410;border:1px solid #EF444425;border-radius:6px;padding:8px;font-size:9px;color:#EF4444;line-height:1.6;">
+        ✗ Weak or missing passphrase undermines 2FA<br>✗ Inconsistent — some sources have it, some don't
+      </div>
+    </div>
+  </div>
+
+  <!-- Option B: Both generated, both required -->
+  <div class="mockup">
+    <div class="mockup-header">B — Auto-generated (proposed)</div>
+    <div class="mockup-body" style="background:#060B14;font-family:system-ui;display:flex;flex-direction:column;gap:12px;padding:16px;">
+
+      <div style="font-size:12px;color:#F1F5F9;font-weight:600;">Submit Form</div>
+
+      <div style="background:#0D1524;border:1px solid #1E2A45;border-radius:8px;padding:12px;display:flex;flex-direction:column;gap:8px;">
+        <div>
+          <div style="font-size:9px;color:#64748B;text-transform:uppercase;letter-spacing:.07em;margin-bottom:4px;">Message</div>
+          <div style="height:36px;background:#060B14;border:1px solid #1E2A45;border-radius:6px;"></div>
+        </div>
+        <div style="font-size:9px;color:#64748B;font-style:italic;background:#0A150E;border:1px solid #10B98120;border-radius:6px;padding:8px;line-height:1.6;">
+          🔒 Two secret credentials will be generated for you after submission.
+        </div>
+        <div style="background:#10B981;border-radius:6px;padding:7px;color:#060B14;font-size:10px;font-weight:700;text-align:center;">Submit →</div>
+      </div>
+
+      <div style="font-size:12px;color:#F1F5F9;font-weight:600;margin-top:4px;">After Submit — Save Both</div>
+      <div style="background:#0D1524;border:1px solid #10B98130;border-radius:8px;padding:12px;display:flex;flex-direction:column;gap:10px;">
+        <div style="text-align:center;">
+          <div style="font-size:9px;color:#64748B;margin-bottom:4px;text-transform:uppercase;letter-spacing:.08em;">Codename</div>
+          <div style="font-size:16px;font-weight:800;color:#10B981;font-family:monospace;">river · amber · cliff</div>
+        </div>
+        <div style="border-top:1px solid #1E2A45;padding-top:10px;text-align:center;">
+          <div style="font-size:9px;color:#64748B;margin-bottom:4px;text-transform:uppercase;letter-spacing:.08em;">Passphrase</div>
+          <div style="font-size:13px;font-weight:800;color:#10B981;font-family:monospace;letter-spacing:.06em;">X7-WOLF-49-DELTA</div>
+        </div>
+        <div style="background:#F59E0B10;border:1px solid #F59E0B25;border-radius:6px;padding:8px;font-size:9px;color:#F59E0B;line-height:1.6;text-align:center;">
+          ⚠ Write both down. Neither will be shown again.
+        </div>
+      </div>
+
+      <div style="background:#10B98110;border:1px solid #10B98125;border-radius:6px;padding:8px;font-size:9px;color:#10B981;line-height:1.6;">
+        ✓ Always strong — no weak passwords<br>✓ Consistent — every source has both<br>✓ Simpler form — no field to fill in
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="section" style="margin-top:20px;">
+  <h3>What changes in the backend</h3>
+  <p class="subtitle" style="margin-top:8px;">If we go with B, the submit route generates a random passphrase (using the same EFF wordlist or a hex token), hashes and stores it, and returns it alongside the codename. Check-in requires both. The passphrase field is removed from the submit form entirely.</p>
+</div>

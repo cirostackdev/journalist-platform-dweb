@@ -3,6 +3,7 @@ import type { Request, Response, NextFunction } from "express"
 type RateLimitOptions = {
   maxRequests: number
   windowMs: number
+  keyExtractor?: (req: Request) => string
 }
 
 type WindowEntry = {
@@ -18,20 +19,20 @@ export function createRateLimiter(opts: RateLimitOptions) {
     res: Response,
     next: NextFunction
   ) {
-    const ip = req.ip ?? "unknown"
+    const key = opts.keyExtractor ? opts.keyExtractor(req) : (req.ip ?? "unknown")
     const now = Date.now()
 
     // Lazy eviction: clean up expired entries to prevent unbounded growth
-    for (const [key, val] of store) {
+    for (const [k, val] of store) {
       if (now - val.windowStart > opts.windowMs) {
-        store.delete(key)
+        store.delete(k)
       }
     }
 
-    const entry = store.get(ip)
+    const entry = store.get(key)
 
     if (!entry) {
-      store.set(ip, { count: 1, windowStart: now })
+      store.set(key, { count: 1, windowStart: now })
       return next()
     }
 
