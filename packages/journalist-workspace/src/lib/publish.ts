@@ -90,10 +90,12 @@ function extractTitleFromHtml(html: string): string {
 }
 
 function extractExcerptFromHtml(html: string): string {
-  const stripped = html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim()
-  const idx = stripped.indexOf("The Newsroom")
-  const afterHeader = idx >= 0 ? stripped.slice(idx + 12) : stripped
-  return afterHeader.replace(/^\s*Investigation\s*·[^·]*/, "").trim().slice(0, 220)
+  // Strip all HTML tags and collapse whitespace to get plain text
+  const text = html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim()
+  // Skip the title (first sentence/heading-length content) by finding first sentence break
+  const firstBreak = text.search(/[.!?]\s/)
+  const startAt = firstBreak > 0 && firstBreak < 120 ? firstBreak + 2 : 0
+  return text.slice(startAt, startAt + 200).trim()
 }
 
 function formatDate(mtime: Date): string {

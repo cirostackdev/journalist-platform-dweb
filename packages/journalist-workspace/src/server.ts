@@ -1,5 +1,6 @@
 import { createInterface } from "readline"
 import { existsSync, readFileSync, mkdirSync } from "fs"
+import { createHash } from "crypto"
 import { deriveMasterKey } from "@journalist/shared/crypto"
 import { openDb } from "./lib/db"
 import { createSessionStore } from "./lib/session"
@@ -31,6 +32,8 @@ async function main() {
   const salt = readFileSync(SALT_PATH)
   const passphrase = await promptPassphrase()
   const masterKey = await deriveMasterKey(passphrase, salt)
+  const keyFingerprint = createHash("sha256").update(masterKey).digest("hex").slice(0, 12)
+  console.log(`Master key fingerprint: ${keyFingerprint} — verify this matches the other service.`)
   const queueKey = new Uint8Array(readFileSync(QUEUE_KEY_RAW_PATH))
   const db = await openDb(DATABASE_URL)
   const sessionStore = createSessionStore()

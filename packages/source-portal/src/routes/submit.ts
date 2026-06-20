@@ -77,11 +77,20 @@ export function createSubmitRouter(opts: SubmitRouterOptions): Router {
         const dek = await generateDEK()
         const encDek = await encryptDEK(dek, opts.masterKey)
         const encContent = await encryptData(bytes.toString("base64"), dek)
-        writeFileSync(join(submissionDir, `${i}.enc`), encContent, "utf8")
+        const filePath = join(submissionDir, `${i}.enc`)
+        writeFileSync(filePath, encContent, "utf8")
         writeFileSync(
           join(submissionDir, `${i}.key`),
           JSON.stringify({ encryptedDek: encDek, originalName: file.originalname }),
           "utf8"
+        )
+        // Encrypt the original filename too, so the DB record doesn't leak it
+        const encFilename = await encryptData(file.originalname, dek)
+        opts.db.insertSubmissionFile(
+          submissionId,
+          encFilename,
+          encDek,
+          filePath
         )
         unlinkSync(file.path)
       }

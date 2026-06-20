@@ -88,7 +88,14 @@ export async function decryptData(
  */
 export function generatePassphrase(): string {
   const CHARSET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789" // 31 chars
-  const bytes = randomBytes(12)
-  const chars = Array.from(bytes, (b) => CHARSET[b % CHARSET.length])
+  const VALID_RANGE = Math.floor(256 / CHARSET.length) * CHARSET.length // 248
+  const chars: string[] = []
+  while (chars.length < 12) {
+    const byte = randomBytes(1)[0]
+    if (byte < VALID_RANGE) {
+      chars.push(CHARSET[byte % CHARSET.length])
+    }
+    // reject bytes >= 248 to eliminate modulo bias
+  }
   return `${chars.slice(0, 4).join("")}-${chars.slice(4, 8).join("")}-${chars.slice(8, 12).join("")}`
 }

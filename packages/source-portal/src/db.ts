@@ -58,6 +58,7 @@ export interface Db {
   query(sql: string): { get(): unknown; all(...args: unknown[]): unknown[] }
   insertSource(codenameHash: string, passphraseHash?: string, codenameHmac?: string): string
   insertSubmission(sourceId: string, encryptedText: string | null): string
+  insertSubmissionFile(submissionId: string, encryptedFilename: string, encryptedDek: string, filePath: string): string
   insertMessage(
     submissionId: string,
     direction: "source" | "journalist",
@@ -95,6 +96,13 @@ export function openDb(path: string): Db {
       sqlite
         .query("INSERT INTO submissions (id, source_id, encrypted_text, submitted_at) VALUES (?, ?, ?, ?)")
         .run(id, sourceId, encryptedText, Date.now())
+      return id
+    },
+    insertSubmissionFile(submissionId: string, encryptedFilename: string, encryptedDek: string, filePath: string): string {
+      const id = randomUUID()
+      sqlite
+        .query("INSERT INTO submission_files (id, submission_id, encrypted_filename, encrypted_dek, file_path, submitted_at) VALUES (?, ?, ?, ?, ?, ?)")
+        .run(id, submissionId, encryptedFilename, encryptedDek, filePath, Date.now())
       return id
     },
     insertMessage(

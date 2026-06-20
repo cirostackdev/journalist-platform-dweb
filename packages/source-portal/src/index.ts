@@ -43,6 +43,8 @@ async function main() {
 
   const passphrase = await promptPassphrase()
   const masterKey = await deriveMasterKey(passphrase, salt)
+  const keyFingerprint = createHash("sha256").update(masterKey).digest("hex").slice(0, 12)
+  console.log(`Master key fingerprint: ${keyFingerprint} — verify this matches the other service.`)
 
   let queueKey: Uint8Array
   if (existsSync(QUEUE_KEY_RAW_PATH)) {
