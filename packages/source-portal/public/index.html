@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Secure Newsroom — Submit a Tip</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<div class="page">
+
+  <header class="site-header">
+    <a href="/" class="logo">
+      <div class="logo-dot"></div>
+      <span class="logo-text">Secure Newsroom</span>
+    </a>
+    <a href="/checkin" class="nav-link">Check In →</a>
+  </header>
+
+  <!-- Hero -->
+  <div class="hero">
+    <div class="hero-icon"><div class="hero-icon-inner"></div></div>
+    <h1 class="hero-title">Share What You Know</h1>
+    <p class="hero-subtitle">Submit documents, files, or messages anonymously. No account. No tracking. End-to-end encrypted over Tor.</p>
+    <div class="cta-row">
+      <button class="btn-primary" id="cta-submit">Submit a Tip</button>
+      <a href="/checkin" class="btn-outline">Check In</a>
+    </div>
+  </div>
+
+  <!-- How it works -->
+  <div class="guide">
+    <p class="guide-label">How it works</p>
+    <div class="step">
+      <div class="step-num">1</div>
+      <div>
+        <div class="step-label">Submit anonymously</div>
+        <div class="step-desc">Type your message or attach files. Nothing is linked to your identity.</div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <div>
+        <div class="step-label">Save both credentials</div>
+        <div class="step-desc">You receive a <strong>codename</strong> and a <strong>passphrase</strong> — both randomly generated. Write them down. They will not be shown again.</div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <div>
+        <div class="step-label">Check for replies</div>
+        <div class="step-desc">Return to this site and use both credentials to read encrypted journalist responses.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Submit form -->
+  <form class="card" id="submit-form">
+    <div class="card-title">Submit a Tip</div>
+    <div class="card-subtitle">Your submission is encrypted and cannot be linked to you.</div>
+
+    <div class="field">
+      <label class="field-label" for="text-input">Message</label>
+      <textarea id="text-input" name="text" placeholder="Describe what you know…"></textarea>
+    </div>
+
+    <div class="field">
+      <label class="field-label">Files <span style="color:var(--border-2);font-weight:400;text-transform:none;">(optional)</span></label>
+      <div class="upload-zone" id="upload-zone">
+        <div class="upload-icon">📎</div>
+        <div class="upload-hint">Drag files here or click to browse<br><small>Max 256 MB per file · up to 10 files</small></div>
+        <div class="upload-files-list" id="upload-files-list"></div>
+      </div>
+      <input type="file" id="file-input" name="files" multiple style="display:none">
+    </div>
+
+    <div id="submit-error" class="error-msg"></div>
+    <button type="submit" class="btn-submit" id="submit-btn">Submit Securely →</button>
+  </form>
+
+  <div class="security-notice">
+    <span style="color:var(--green);font-size:14px;flex-shrink:0;margin-top:1px;">🔒</span>
+    <p class="security-notice-text">Your submission is encrypted with a key only the newsroom holds. This site runs exclusively over Tor — no IP addresses are logged.</p>
+  </div>
+
+  <!-- Success screen (hidden until submit succeeds) -->
+  <div class="success-card" id="submit-result">
+    <div class="success-icon">✓</div>
+    <div class="success-title">Submission Received</div>
+    <p class="success-subtitle">Save both credentials below. They will not be shown again.</p>
+    <div class="credential-box">
+      <div class="credential-label">Codename</div>
+      <div class="credential-value" id="codename-display"></div>
+    </div>
+    <div class="credential-box">
+      <div class="credential-label">Passphrase</div>
+      <div class="credential-value" id="passphrase-display"></div>
+    </div>
+    <div class="warning-banner">⚠ Write both down now. They will not be shown again. Do not store them digitally or take a screenshot.</div>
+  </div>
+
+</div>
+<script src="/portal.js"></script>
+</body>
+</html>
