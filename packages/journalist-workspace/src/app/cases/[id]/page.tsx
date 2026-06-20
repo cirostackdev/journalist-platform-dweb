@@ -17,6 +17,7 @@ interface Submission {
   text: string | null
   files: { index: number; originalName: string | null }[]
   followUps?: { body: string; created_at: number }[]
+  displayName?: string | null
 }
 
 interface ArticleItem {
@@ -109,6 +110,9 @@ export default function CasePage({ params }: { params: { id: string } }) {
   const [assignUserId, setAssignUserId] = useState("")
   const [assignLoading, setAssignLoading] = useState(false)
   const [assignMsg, setAssignMsg] = useState<string | null>(null)
+
+  // Video watch modal
+  const [watchUrl, setWatchUrl] = useState<string | null>(null)
 
   async function loadCase() {
     try {
@@ -259,6 +263,11 @@ export default function CasePage({ params }: { params: { id: string } }) {
     ? `Case: ${caseData.submission_ref.substring(0, 16)}${caseData.submission_ref.length > 16 ? "…" : ""}`
     : `Case: ${id.substring(0, 8)}…`
 
+  function isVideoFile(name: string | null): boolean {
+    if (!name) return false
+    return /\.(mp4|mov|avi|mkv|webm|m4v|mts|ts)$/i.test(name)
+  }
+
   return (
     <WorkspaceShell title={caseTitle}>
       <div className="max-w-3xl space-y-6">
@@ -313,6 +322,9 @@ export default function CasePage({ params }: { params: { id: string } }) {
             {submission && (
               <section className="space-y-3">
                 <h2 className="text-sm font-semibold text-white">Source Submission</h2>
+                {submission.displayName && (
+                  <p className="text-xs text-gray-500 mb-1">From: <span className="text-gray-300">{submission.displayName}</span></p>
+                )}
                 {submission.text && (
                   <div className="bg-gray-800 rounded-xl border border-gray-700 p-4">
                     <p className="text-xs text-gray-500 mb-2">Message from source</p>
@@ -323,9 +335,18 @@ export default function CasePage({ params }: { params: { id: string } }) {
                   <div className="bg-gray-800 rounded-xl border border-gray-700 p-4 space-y-1">
                     <p className="text-xs text-gray-500 mb-2">Attached files ({submission.files.length})</p>
                     {submission.files.map((f) => (
-                      <div key={f.index} className="text-sm text-gray-300 flex items-center gap-2">
+                      <div key={f.index} className="text-sm text-gray-300 flex items-center gap-2 flex-wrap">
                         <span className="text-gray-500">📄</span>
-                        {f.originalName ?? `File ${f.index + 1}`}
+                        <span>{f.originalName ?? `File ${f.index + 1}`}</span>
+                        <a href={`/api/cases/${id}/files/${f.index}`} download className="text-xs text-indigo-400 hover:text-indigo-300">Download</a>
+                        {isVideoFile(f.originalName) && (
+                          <button
+                            onClick={() => setWatchUrl(`/api/cases/${id}/files/${f.index}/stream`)}
+                            className="text-xs text-blue-400 hover:text-blue-300"
+                          >
+                            ▶ Watch
+                          </button>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -540,6 +561,27 @@ export default function CasePage({ params }: { params: { id: string } }) {
           </>
         )}
       </div>
+      {watchUrl && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80"
+          onClick={() => setWatchUrl(null)}
+        >
+          <div className="relative max-w-3xl w-full mx-4" onClick={(e) => e.stopPropagation()}>
+            <button
+              onClick={() => setWatchUrl(null)}
+              className="absolute -top-8 right-0 text-gray-400 hover:text-white text-sm"
+            >
+              Close ✕
+            </button>
+            <video
+              src={watchUrl}
+              controls
+              autoPlay
+              className="w-full rounded-lg bg-black"
+            />
+          </div>
+        </div>
+      )}
     </WorkspaceShell>
   )
 }
