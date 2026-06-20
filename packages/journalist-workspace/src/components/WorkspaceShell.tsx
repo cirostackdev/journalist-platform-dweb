@@ -12,6 +12,7 @@ import {
   Menu,
   X,
   Shield,
+  Play,
 } from "lucide-react"
 
 export function WorkspaceShell({
@@ -39,6 +40,7 @@ export function WorkspaceShell({
   const NAV = [
     { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
     { href: "/cases", icon: FolderOpen, label: "Cases" },
+    { href: "/videos", icon: Play, label: "Videos" },
     ...(role === "admin" || role === "editor"
       ? [{ href: "/articles", icon: FileText, label: "Articles" }]
       : []),
