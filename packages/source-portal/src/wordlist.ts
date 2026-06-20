@@ -785,14 +785,16 @@ const WORDS = [
   "zone", "zoning", "zookeeper", "zoologist", "zoology", "zoom"
 ]
 
-export async function generateCodename(): Promise<string> {
+export async function generateDiceware(): Promise<string> {
   await sodium.ready
   const words: string[] = []
-  for (let i = 0; i < 3; i++) {
+  for (let i = 0; i < 7; i++) {
     const buf = sodium.randombytes_buf(4)
-    // Handle both regular ArrayBuffer and potential offsets in the buffer
     const index = (Buffer.from(buf).readUInt32BE(0) >>> 0) % WORDS.length
     words.push(WORDS[index])
   }
   return words.join("-")
 }
+
+// Backward-compat alias — remove after all callers migrated
+export const generateCodename = generateDiceware
