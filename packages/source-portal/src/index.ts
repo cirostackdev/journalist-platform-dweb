@@ -2,6 +2,7 @@ import express from "express"
 import { createInterface } from "readline"
 import { existsSync, readFileSync, writeFileSync, mkdirSync } from "fs"
 import { randomBytes } from "crypto"
+import { join } from "path"
 import { deriveMasterKey, generateDEK } from "@journalist/shared/crypto"
 import { openDb } from "./db"
 import { startReplyConsumer } from "./replyConsumer"
@@ -60,6 +61,11 @@ async function main() {
   const app = express()
   app.use(express.json({ limit: "1mb" }))
   app.disable("x-powered-by")
+
+  const PUBLIC_DIR = join(import.meta.dir, "..", "public")
+  app.get("/", (_req, res) => res.sendFile(join(PUBLIC_DIR, "index.html")))
+  app.get("/checkin", (_req, res) => res.sendFile(join(PUBLIC_DIR, "checkin.html")))
+  app.use(express.static(PUBLIC_DIR))
 
   app.use("/submit", submitLimiter, createSubmitRouter({ db, masterKey, queueKey, queueDir: TO_WORKSPACE_QUEUE_DIR }))
   app.use("/checkin", checkinLimiter, createCheckinRouter({ db, masterKey }))
