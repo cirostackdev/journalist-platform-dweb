@@ -57,6 +57,7 @@ export interface Db {
   insertArticle(caseId: string, authorId: string): Promise<string>
   getArticle(id: string): Promise<Article | null>
   updateArticle(id: string, encryptedBody: string, encryptedDek: string): Promise<void>
+  updateArticleStatus(id: string, status: ArticleStatus): Promise<void>
   publishArticle(id: string): Promise<void>
 }
 
@@ -199,6 +200,10 @@ export async function openDb(connectionString: string): Promise<Db> {
         "UPDATE articles SET encrypted_body = $1, encrypted_dek = $2 WHERE id = $3",
         [encryptedBody, encryptedDek, id]
       )
+    },
+
+    async updateArticleStatus(id, status) {
+      await pool.query("UPDATE articles SET status = $1 WHERE id = $2", [status, id])
     },
 
     async publishArticle(id) {

@@ -1,0 +1,127 @@
+bun test v1.3.11 (af24e281)
+
+packages\journalist-workspace\tests\auth.test.ts:
+1172 |   afterConnect(status, self._handle, req, readable, writable);
+1173 | }
+1174 | function createConnectionError(req, status) {
+1175 |   let details;
+1176 |   if (req.localAddress && req.localPort)
+1177 |   let ex = new ExceptionWithHostPort(status, "connect", req.address, req.port);
+                  ^
+error: connect ECONNREFUSED ::1:5432
+   errno: -4078,
+ syscall: "connect",
+    port: 5432,
+ address: "::1",
+    code: "ECONNREFUSED"
+
+      at createConnectionError (node:net:1177:12)
+      at afterConnectMultiple (node:net:1166:35)
+      at connectError (node:net:352:48)
+1172 |   afterConnect(status, self._handle, req, readable, writable);
+1173 | }
+1174 | function createConnectionError(req, status) {
+1175 |   let details;
+1176 |   if (req.localAddress && req.localPort)
+1177 |   let ex = new ExceptionWithHostPort(status, "connect", req.address, req.port);
+                  ^
+error: connect ECONNREFUSED 127.0.0.1:5432
+   errno: -4078,
+ syscall: "connect",
+    port: 5432,
+ address: "127.0.0.1",
+    code: "ECONNREFUSED"
+
+      at createConnectionError (node:net:1177:12)
+      at afterConnectMultiple (node:net:1166:35)
+      at connectError (node:net:352:48)
+(fail) (unnamed) [219.00ms]
+
+packages\journalist-workspace\tests\db.test.ts:
+1172 |   afterConnect(status, self._handle, req, readable, writable);
+1173 | }
+1174 | function createConnectionError(req, status) {
+1175 |   let details;
+1176 |   if (req.localAddress && req.localPort)
+1177 |   let ex = new ExceptionWithHostPort(status, "connect", req.address, req.port);
+                  ^
+error: connect ECONNREFUSED ::1:5432
+   errno: -4078,
+ syscall: "connect",
+    port: 5432,
+ address: "::1",
+    code: "ECONNREFUSED"
+
+      at createConnectionError (node:net:1177:12)
+      at afterConnectMultiple (node:net:1166:35)
+      at connectError (node:net:352:48)
+1172 |   afterConnect(status, self._handle, req, readable, writable);
+1173 | }
+1174 | function createConnectionError(req, status) {
+1175 |   let details;
+1176 |   if (req.localAddress && req.localPort)
+1177 |   let ex = new ExceptionWithHostPort(status, "connect", req.address, req.port);
+                  ^
+error: connect ECONNREFUSED 127.0.0.1:5432
+   errno: -4078,
+ syscall: "connect",
+    port: 5432,
+ address: "127.0.0.1",
+    code: "ECONNREFUSED"
+
+      at createConnectionError (node:net:1177:12)
+      at afterConnectMultiple (node:net:1166:35)
+      at connectError (node:net:352:48)
+(fail) (unnamed) [15.00ms]
+ 7 | beforeAll(async () => {
+ 8 |   db = await openDb(TEST_DB_URL)
+ 9 | })
+10 | 
+11 | afterAll(async () => {
+12 |   await db.query("DROP TABLE IF EXISTS articles, case_notes, cases, users CASCADE")
+             ^
+TypeError: undefined is not an object (evaluating 'db.query')
+      at <anonymous> (C:\Users\USER\Desktop\journalist-platform\packages\journalist-workspace\tests\db.test.ts:12:9)
+(fail) (unnamed)
+
+packages\journalist-workspace\tests\queue-consumer.test.ts:
+1172 |   afterConnect(status, self._handle, req, readable, writable);
+1173 | }
+1174 | function createConnectionError(req, status) {
+1175 |   let details;
+1176 |   if (req.localAddress && req.localPort)
+1177 |   let ex = new ExceptionWithHostPort(status, "connect", req.address, req.port);
+                  ^
+error: connect ECONNREFUSED ::1:5432
+   errno: -4078,
+ syscall: "connect",
+    port: 5432,
+ address: "::1",
+    code: "ECONNREFUSED"
+
+      at createConnectionError (node:net:1177:12)
+      at afterConnectMultiple (node:net:1166:35)
+      at connectError (node:net:352:48)
+1172 |   afterConnect(status, self._handle, req, readable, writable);
+1173 | }
+1174 | function createConnectionError(req, status) {
+1175 |   let details;
+1176 |   if (req.localAddress && req.localPort)
+1177 |   let ex = new ExceptionWithHostPort(status, "connect", req.address, req.port);
+                  ^
+error: connect ECONNREFUSED 127.0.0.1:5432
+   errno: -4078,
+ syscall: "connect",
+    port: 5432,
+ address: "127.0.0.1",
+    code: "ECONNREFUSED"
+
+      at createConnectionError (node:net:1177:12)
+      at afterConnectMultiple (node:net:1166:35)
+      at connectError (node:net:352:48)
+(fail) (unnamed) [16.00ms]
+
+ 45 pass
+ 4 fail
+ 62 expect() calls
+Ran 49 tests across 13 files. [13.92s]
