@@ -8,18 +8,18 @@ export async function deriveMasterKey(
   passphrase: string,
   salt: Buffer
 ): Promise<Buffer> {
-  if (salt.length < 8) {
-    throw new Error("Salt must be at least 8 bytes")
+  if (salt.length < 16) {
+    throw new Error("Salt must be at least 16 bytes")
   }
-  // 64 MB / 3 iterations — sufficient for login-style auth.
-  // Increase memoryCost to 262144+ for higher-threat deployments (e.g. nation-state adversaries).
+  // 256 MB / 4 iterations — nation-state threat model.
+  // Complies with NIST SP 800-132 salt minimum (16 bytes) and higher-threat deployments.
   return argon2.hash(passphrase, {
     type: argon2.argon2id,
     salt,
     hashLength: 32,
     raw: true,
-    memoryCost: 65536,
-    timeCost: 3,
+    memoryCost: 262144,
+    timeCost: 4,
     parallelism: 1,
   }) as Promise<Buffer>
 }
