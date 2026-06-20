@@ -9,7 +9,7 @@ beforeAll(async () => {
 })
 
 afterAll(async () => {
-  await db.query("DROP TABLE IF EXISTS articles, case_notes, cases, users CASCADE")
+  await db.query("DROP TABLE IF EXISTS videos, articles, case_notes, cases, users CASCADE")
   await db.close()
 })
 
@@ -100,5 +100,67 @@ describe("articles", () => {
     await db.updateArticleStatus(id, "review")
     const article = await db.getArticle(id)
     expect(article!.status).toBe("review")
+  })
+})
+
+describe("videos table", () => {
+  let userId: string
+
+  beforeAll(async () => {
+    userId = await db.insertUser("videouser_" + Date.now(), "hash", "enc", "journalist")
+  })
+
+  test("videos table exists", async () => {
+    const res = await db.query(
+      "SELECT table_name FROM information_schema.tables WHERE table_name = 'videos'"
+    )
+    expect(res.rows).toHaveLength(1)
+  })
+
+  test("insertVideo / getVideo round-trip", async () => {
+    const id = await db.insertVideo({
+      titleEnc: "enc-title", titleDek: "dek-title",
+      sourceType: "upload", uploadPath: "/var/secure-videos/test.enc",
+      uploadDek: "sealed-dek", createdBy: userId,
+    })
+    const video = await db.getVideo(id)
+    expect(video).not.toBeNull()
+    expect(video!.title_enc).toBe("enc-title")
+    expect(video!.source_type).toBe("upload")
+    expect(video!.status).toBe("draft")
+  })
+
+  test("getVideos filters by createdBy", async () => {
+    const id = await db.insertVideo({
+      titleEnc: "e", titleDek: "d", sourceType: "upload",
+      uploadPath: "/p", uploadDek: "dk", createdBy: userId,
+    })
+    const own = await db.getVideos({ createdBy: userId })
+    expect(own.some(v => v.id === id)).toBe(true)
+  })
+
+  test("updateVideoStatus changes status", async () => {
+    const id = await db.insertVideo({
+      titleEnc: "e", titleDek: "d", sourceType: "upload",
+      uploadPath: "/p", uploadDek: "dk", createdBy: userId,
+    })
+    await db.updateVideoStatus(id, "processing")
+    const v1 = await db.getVideo(id)
+    expect(v1!.status).toBe("processing")
+
+    const now = new Date()
+    await db.updateVideoStatus(id, "published", now)
+    const v2 = await db.getVideo(id)
+    expect(v2!.status).toBe("published")
+    expect(v2!.published_at).not.toBeNull()
+  })
+
+  test("deleteVideo removes the row", async () => {
+    const id = await db.insertVideo({
+      titleEnc: "e", titleDek: "d", sourceType: "upload",
+      uploadPath: "/p", uploadDek: "dk", createdBy: userId,
+    })
+    await db.deleteVideo(id)
+    expect(await db.getVideo(id)).toBeNull()
   })
 })
