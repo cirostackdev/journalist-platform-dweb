@@ -13,6 +13,7 @@ import {
   sealedBoxEncrypt,
 } from "@journalist/shared/crypto"
 import { writeQueueMessage } from "@journalist/shared/queue"
+import { stripMetadata } from "../stripMetadata"
 
 type SubmitRouterOptions = {
   db: Db
@@ -78,8 +79,14 @@ export function createSubmitRouter(opts: SubmitRouterOptions): Router {
         mkdirSync(submissionDir, { recursive: true })
 
         const fileBytes = readFileSync(file.path)
+
+        // Strip metadata before encryption
+        const { data: cleanBytes, stripped, warning } = await stripMetadata(fileBytes, file.originalname)
+        if (warning) console.warn(`[submit] File ${i} (${file.originalname}): ${warning}`)
+        const bytesToEncrypt = cleanBytes
+
         const dek = await generateDEK()
-        const encContent = await encryptData(fileBytes, dek)
+        const encContent = await encryptData(bytesToEncrypt, dek)
         const filePath = join(submissionDir, `${i}.enc`)
         writeFileSync(filePath, encContent, "utf8")
 
@@ -101,6 +108,7 @@ export function createSubmitRouter(opts: SubmitRouterOptions): Router {
         sourceId,
         hasText: !!sealedText,
         fileCount: files.length,
+        metadataStripped: files.length > 0,
       })
 
       res.status(200).json({ displayName, diceware1, diceware2 })
