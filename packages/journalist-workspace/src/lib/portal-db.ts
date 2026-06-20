@@ -64,6 +64,43 @@ export async function getSubmissionContent(
   }
 }
 
+export interface FileForDownload {
+  originalName: string | null
+  encFilePath: string
+  sealedDek: string
+  encryptedFilename: string
+}
+
+/**
+ * Returns the encrypted file metadata needed to decrypt and serve a file.
+ * Index is 0-based (matches the file array order in submission_files).
+ */
+export async function getFileForDownload(
+  submissionId: string,
+  fileIndex: number,
+  portalDbPath: string
+): Promise<FileForDownload | null> {
+  let db: InstanceType<typeof Database> | null = null
+  try {
+    db = new Database(portalDbPath, { readonly: true })
+    const rows = db
+      .query(
+        "SELECT encrypted_filename, encrypted_dek, file_path FROM submission_files WHERE submission_id = ? ORDER BY rowid ASC"
+      )
+      .all(submissionId) as { encrypted_filename: string; encrypted_dek: string; file_path: string }[]
+    if (fileIndex < 0 || fileIndex >= rows.length) return null
+    const f = rows[fileIndex]
+    return {
+      originalName: null, // resolved at download time
+      encFilePath: f.file_path,
+      sealedDek: f.encrypted_dek,
+      encryptedFilename: f.encrypted_filename,
+    }
+  } finally {
+    db?.close()
+  }
+}
+
 export async function getSourcePublicKeyForSubmission(
   submissionId: string,
   portalDbPath: string
