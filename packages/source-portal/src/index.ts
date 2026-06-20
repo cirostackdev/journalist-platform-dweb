@@ -4,6 +4,7 @@ import { existsSync, readFileSync, writeFileSync, mkdirSync } from "fs"
 import { randomBytes } from "crypto"
 import { deriveMasterKey, generateDEK } from "@journalist/shared/crypto"
 import { openDb } from "./db"
+import { startReplyConsumer } from "./replyConsumer"
 import { createSubmitRouter } from "./routes/submit"
 import { createCheckinRouter } from "./routes/checkin"
 import { createRateLimiter } from "./middleware/rateLimit"
@@ -50,6 +51,7 @@ async function main() {
   }
 
   const db = openDb(DB_PATH)
+  startReplyConsumer({ db, queueDir: QUEUE_DIR, queueKey })
   const submitLimiter = createRateLimiter({ maxRequests: 5, windowMs: 60_000 })
   const checkinLimiter = createRateLimiter({ maxRequests: 10, windowMs: 60_000 })
 
