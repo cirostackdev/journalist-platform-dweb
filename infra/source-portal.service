@@ -1,0 +1,26 @@
+[Unit]
+Description=Journalist Platform — Source Portal
+After=network.target tor.service
+Requires=tor.service
+
+[Service]
+Type=simple
+User=journalist-platform
+WorkingDirectory=/opt/journalist-platform/packages/source-portal
+ExecStart=/usr/local/bin/bun run src/index.ts
+Restart=on-failure
+RestartSec=5
+
+# Security hardening
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=yes
+ReadWritePaths=/var/secure /var/secure-queue /var/secure-submissions
+
+# Logs to memory only — no persistent disk logs
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

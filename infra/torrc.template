@@ -1,0 +1,21 @@
+# Tor configuration for journalist platform
+# Replace /etc/tor/torrc with this file
+
+SocksPort 9050
+ControlPort 9051
+DataDirectory /var/lib/tor
+
+# Source portal — public-facing (.onion published to sources)
+HiddenServiceDir /var/lib/tor/source-portal/
+HiddenServicePort 80 127.0.0.1:3000
+
+# Journalist workspace — NEVER publish this address
+HiddenServiceDir /var/lib/tor/journalist-workspace/
+HiddenServicePort 443 127.0.0.1:3001
+
+# Publication site — public-facing (.onion for published articles)
+HiddenServiceDir /var/lib/tor/publication/
+HiddenServicePort 80 127.0.0.1:8080
+
+# This server only provides hidden services — no exit relay
+ExitPolicy reject *:*
