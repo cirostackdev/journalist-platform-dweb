@@ -82,7 +82,12 @@ export function createSubmitRouter(opts: SubmitRouterOptions): Router {
       const submissionsDir = opts.submissionsDir ?? "/var/secure-submissions"
       for (let i = 0; i < files.length; i++) {
         const file = files[i]
-        const submissionDir = join(submissionsDir, submissionId)
+        // Use HMAC of submissionId as directory name — hides the UUID from filesystem enumeration
+        const submissionDirName = createHmac("sha256", opts.masterKey)
+          .update(submissionId)
+          .digest("hex")
+          .slice(0, 32)
+        const submissionDir = join(submissionsDir, submissionDirName)
         mkdirSync(submissionDir, { recursive: true })
 
         const fileBytes = readFileSync(file.path)
