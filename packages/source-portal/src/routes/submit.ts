@@ -124,7 +124,13 @@ export function createSubmitRouter(opts: SubmitRouterOptions): Router {
       })
 
       res.status(200).json({ displayName, diceware1, diceware2 })
-    } catch (err) {
+    } catch (err: any) {
+      // UNIQUE constraint failure on codename_hash means an astronomically rare diceware collision.
+      // Instruct the source to resubmit — a fresh diceware will be generated.
+      if (err?.message?.includes("UNIQUE") || err?.code === "SQLITE_CONSTRAINT_UNIQUE") {
+        res.status(503).json({ error: "Please try submitting again." })
+        return
+      }
       console.error("Submit error:", err)
       res.status(500).json({ error: "Submission failed." })
     }

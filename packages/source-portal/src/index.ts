@@ -68,9 +68,9 @@ async function main() {
     maxRequests: 10,
     windowMs: 60_000,
     keyExtractor: (req) => {
-      const codename = req.body?.codename
-      if (typeof codename === "string" && codename.length > 0) {
-        return createHash("sha256").update(codename).digest("hex")
+      const diceware1 = req.body?.diceware1
+      if (typeof diceware1 === "string" && diceware1.length > 0) {
+        return createHash("sha256").update(diceware1).digest("hex")
       }
       return req.ip ?? "unknown"
     },
