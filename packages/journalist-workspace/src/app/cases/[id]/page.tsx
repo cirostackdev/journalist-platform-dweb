@@ -12,6 +12,12 @@ interface Note {
   body: string
 }
 
+interface ArticleItem {
+  id: string
+  status: string
+  created_at: string
+}
+
 interface CaseData {
   id: string
   submission_ref: string
@@ -71,6 +77,7 @@ export default function CasePage({ params }: { params: { id: string } }) {
 
   const [caseData, setCaseData] = useState<CaseData | null>(null)
   const [notes, setNotes] = useState<Note[]>([])
+  const [articles, setArticles] = useState<ArticleItem[]>([])
   const [loadError, setLoadError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [role, setRole] = useState<string | null>(null)
@@ -113,6 +120,9 @@ export default function CasePage({ params }: { params: { id: string } }) {
         setCaseData(data.case)
         setNotes(data.notes ?? [])
         setSelectedStatus(data.case?.status ?? "new")
+        const artRes = await fetch(`/api/cases/${id}/articles`, { headers: { "x-session": token } })
+        const artData = await artRes.json()
+        setArticles(artData.articles ?? [])
       }
     } catch {
       setLoadError("Failed to load case")
@@ -138,7 +148,7 @@ export default function CasePage({ params }: { params: { id: string } }) {
     setNoteLoading(true)
     setNoteError(null)
     try {
-      const res = await fetch(`/api/cases/${id}/reply/notes`, {
+      const res = await fetch(`/api/cases/${id}/notes`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -471,15 +481,30 @@ export default function CasePage({ params }: { params: { id: string } }) {
               </section>
             )}
 
-            {/* Create article */}
+            {/* Articles */}
             <section className="space-y-3">
-              <h2 className="text-sm font-semibold text-white">Article</h2>
-              <button
-                onClick={handleCreateArticle}
-                className="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-              >
-                Create Article from Case
-              </button>
+              <h2 className="text-sm font-semibold text-white">Articles</h2>
+              {articles.length > 0 && (
+                <div className="space-y-2">
+                  {articles.map((a) => (
+                    <Link key={a.id} href={`/articles/${a.id}`}
+                      className="flex items-center justify-between bg-gray-800 rounded-xl border border-gray-700 p-3 hover:bg-gray-700/50 transition-colors text-sm">
+                      <span className="font-mono text-xs text-gray-400">{a.id.substring(0, 16)}…</span>
+                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                        a.status === "draft" ? "bg-orange-500/20 text-orange-300" :
+                        a.status === "review" ? "bg-purple-500/20 text-purple-300" :
+                        "bg-green-500/20 text-green-300"
+                      }`}>{a.status}</span>
+                    </Link>
+                  ))}
+                </div>
+              )}
+              {role !== "editor" && (
+                <button onClick={handleCreateArticle}
+                  className="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+                  New Article
+                </button>
+              )}
             </section>
           </>
         )}

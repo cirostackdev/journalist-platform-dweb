@@ -39,6 +39,7 @@ export type Article = {
   encrypted_dek: string | null
   status: ArticleStatus
   published_at: Date | null
+  created_at: Date
 }
 
 export interface Db {
@@ -56,6 +57,7 @@ export interface Db {
   getCaseNotes(caseId: string): Promise<CaseNote[]>
   insertArticle(caseId: string, authorId: string): Promise<string>
   getArticle(id: string): Promise<Article | null>
+  getArticlesByCase(caseId: string): Promise<Article[]>
   updateArticle(id: string, encryptedBody: string, encryptedDek: string): Promise<void>
   updateArticleStatus(id: string, status: ArticleStatus): Promise<void>
   publishArticle(id: string): Promise<void>
@@ -95,7 +97,8 @@ const SCHEMA = `
     encrypted_body TEXT,
     encrypted_dek TEXT,
     status TEXT NOT NULL DEFAULT 'draft' CHECK(status IN ('draft', 'review', 'published')),
-    published_at TIMESTAMPTZ
+    published_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
   );
 `
 
@@ -193,6 +196,11 @@ export async function openDb(connectionString: string): Promise<Db> {
     async getArticle(id) {
       const res = await pool.query("SELECT * FROM articles WHERE id = $1", [id])
       return (res.rows[0] as Article) ?? null
+    },
+
+    async getArticlesByCase(caseId) {
+      const res = await pool.query("SELECT * FROM articles WHERE case_id = $1 ORDER BY created_at DESC", [caseId])
+      return res.rows as Article[]
     },
 
     async updateArticle(id, encryptedBody, encryptedDek) {

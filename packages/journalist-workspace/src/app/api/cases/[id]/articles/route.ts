@@ -1,6 +1,19 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getGlobals } from "@/lib/globals"
 
+export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
+  const { db, sessionStore } = getGlobals()
+  const token = req.headers.get("x-session") ?? ""
+  if (!sessionStore.getSession(token)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  const articles = await db.getArticlesByCase(params.id)
+  return NextResponse.json({
+    articles: articles.map((a) => ({
+      id: a.id, case_id: a.case_id, author_id: a.author_id,
+      status: a.status, published_at: a.published_at, created_at: a.created_at,
+    }))
+  })
+}
+
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
   const { db, sessionStore } = getGlobals()
   const token = req.headers.get("x-session") ?? ""
