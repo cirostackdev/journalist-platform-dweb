@@ -6,6 +6,7 @@ import {
   decryptDEK,
   encryptData,
   decryptData,
+  generatePassphrase,
 } from "@journalist/shared/crypto"
 
 describe("deriveMasterKey", () => {
@@ -85,5 +86,25 @@ describe("encryptData / decryptData", () => {
 
   test("decryptData throws on truncated ciphertext", async () => {
     await expect(decryptData("dG9vc2hvcnQ=", new Uint8Array(32))).rejects.toThrow("too short")
+  })
+})
+
+describe("generatePassphrase", () => {
+  test("returns a string in XXXX-XXXX-XXXX format", () => {
+    const p = generatePassphrase()
+    expect(p).toMatch(/^[A-Z2-9]{4}-[A-Z2-9]{4}-[A-Z2-9]{4}$/)
+  })
+
+  test("two calls produce different values", () => {
+    const a = generatePassphrase()
+    const b = generatePassphrase()
+    expect(a).not.toBe(b)
+  })
+
+  test("contains no ambiguous characters (0, 1, I, O, L)", () => {
+    for (let i = 0; i < 20; i++) {
+      const p = generatePassphrase()
+      expect(p).not.toMatch(/[01IOL]/)
+    }
   })
 })

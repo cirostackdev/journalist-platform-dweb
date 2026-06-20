@@ -1,4 +1,5 @@
 import { createRequire } from "module"
+import { randomBytes } from "crypto"
 const _require = createRequire(import.meta.url)
 const sodium = _require("libsodium-wrappers") as typeof import("libsodium-wrappers")
 import argon2 from "argon2"
@@ -79,4 +80,15 @@ export async function decryptData(
   const decrypted = sodium.crypto_secretbox_open_easy(encrypted, nonce, dek)
   if (!decrypted) throw new Error("Data decryption failed")
   return Buffer.from(decrypted)
+}
+
+/**
+ * Generates a random 12-character alphanumeric passphrase formatted as XXXX-XXXX-XXXX.
+ * Uses an unambiguous charset (no 0, 1, I, O, L) for readability.
+ */
+export function generatePassphrase(): string {
+  const CHARSET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789" // 31 chars
+  const bytes = randomBytes(12)
+  const chars = Array.from(bytes, (b) => CHARSET[b % CHARSET.length])
+  return `${chars.slice(0, 4).join("")}-${chars.slice(4, 8).join("")}-${chars.slice(8, 12).join("")}`
 }
