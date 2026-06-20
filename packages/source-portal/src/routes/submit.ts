@@ -9,6 +9,7 @@ import { generateDiceware } from "../wordlist"
 import {
   generateDEK,
   encryptData,
+  encryptDEK,
   deriveSourceKeypair,
   sealedBoxEncrypt,
 } from "@journalist/shared/crypto"
@@ -63,10 +64,16 @@ export function createSubmitRouter(opts: SubmitRouterOptions): Router {
       const { publicKey: sourcePK } = await deriveSourceKeypair(diceware2)
       const sourcePKHex = Buffer.from(sourcePK).toString("hex")
 
+      // Encrypt display_name with masterKey-wrapped DEK
+      const displayNameDek = await generateDEK()
+      const encDisplayNameDek = await encryptDEK(displayNameDek, opts.masterKey)
+      const encDisplayNameBody = await encryptData(displayName, displayNameDek)
+      const encDisplayName = JSON.stringify({ dek: encDisplayNameDek, body: encDisplayNameBody })
+
       const sourceId = opts.db.insertSource(
         diceware1Hash,
         diceware1Hmac,
-        displayName,
+        encDisplayName,
         sourcePKHex,
       )
 

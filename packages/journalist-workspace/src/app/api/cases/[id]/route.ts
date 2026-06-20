@@ -30,6 +30,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
       caseData.submission_ref,
       newsroomPublicKey,
       newsroomPrivateKey,
+      masterKey,
       portalDbPath
     )
     if (content) {

@@ -1,5 +1,5 @@
 import { Database } from "bun:sqlite"
-import { sealedBoxDecrypt, decryptData } from "@journalist/shared/crypto"
+import { sealedBoxDecrypt, decryptData, decryptDEK } from "@journalist/shared/crypto"
 
 export interface SubmissionContent {
   submissionId: string
@@ -13,6 +13,7 @@ export async function getSubmissionContent(
   submissionId: string,
   newsroomPublicKey: Uint8Array,
   newsroomPrivateKey: Uint8Array,
+  masterKey: Buffer,
   portalDbPath: string
 ): Promise<SubmissionContent | null> {
   let db: InstanceType<typeof Database> | null = null
@@ -58,7 +59,25 @@ export async function getSubmissionContent(
       })
     )
 
-    return { submissionId, displayName: row.display_name ?? null, hasText: !!text, text, files }
+    let displayName: string | null = null
+    if (row.display_name) {
+      try {
+        const parsed = JSON.parse(row.display_name)
+        if (parsed.dek && parsed.body) {
+          // Encrypted format: { dek, body }
+          const dek = await decryptDEK(parsed.dek, masterKey)
+          const buf = await decryptData(parsed.body, dek)
+          displayName = buf.toString("utf8")
+        } else {
+          // Legacy plaintext fallback (old rows before this fix)
+          displayName = row.display_name
+        }
+      } catch {
+        displayName = row.display_name // fallback for truly old plaintext rows
+      }
+    }
+
+    return { submissionId, displayName, hasText: !!text, text, files }
   } finally {
     db?.close()
   }
