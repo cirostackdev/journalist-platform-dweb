@@ -1,0 +1,71 @@
+import { createRequire } from "module"
+const _require = createRequire(import.meta.url)
+const sodium = _require("libsodium-wrappers") as typeof import("libsodium-wrappers")
+import argon2 from "argon2"
+
+export async function deriveMasterKey(
+  passphrase: string,
+  salt: Buffer
+): Promise<Buffer> {
+  return argon2.hash(passphrase, {
+    type: argon2.argon2id,
+    salt,
+    hashLength: 32,
+    raw: true,
+    memoryCost: 65536,
+    timeCost: 3,
+    parallelism: 1,
+  }) as Promise<Buffer>
+}
+
+export async function generateDEK(): Promise<Uint8Array> {
+  await sodium.ready
+  return sodium.randombytes_buf(sodium.crypto_secretbox_KEYBYTES)
+}
+
+export async function encryptDEK(
+  dek: Uint8Array,
+  masterKey: Buffer
+): Promise<string> {
+  await sodium.ready
+  const nonce = sodium.randombytes_buf(sodium.crypto_secretbox_NONCEBYTES)
+  const encrypted = sodium.crypto_secretbox_easy(dek, nonce, masterKey)
+  return Buffer.concat([Buffer.from(nonce), Buffer.from(encrypted)]).toString("base64")
+}
+
+export async function decryptDEK(
+  encryptedDEK: string,
+  masterKey: Buffer
+): Promise<Uint8Array> {
+  await sodium.ready
+  const buf = Buffer.from(encryptedDEK, "base64")
+  const nonce = buf.subarray(0, sodium.crypto_secretbox_NONCEBYTES)
+  const ciphertext = buf.subarray(sodium.crypto_secretbox_NONCEBYTES)
+  const dek = sodium.crypto_secretbox_open_easy(ciphertext, nonce, masterKey)
+  if (!dek) throw new Error("DEK decryption failed — wrong master key or corrupted data")
+  return dek
+}
+
+export async function encryptData(
+  plaintext: string | Buffer,
+  dek: Uint8Array
+): Promise<string> {
+  await sodium.ready
+  const nonce = sodium.randombytes_buf(sodium.crypto_secretbox_NONCEBYTES)
+  const data = typeof plaintext === "string" ? Buffer.from(plaintext, "utf8") : plaintext
+  const encrypted = sodium.crypto_secretbox_easy(data, nonce, dek)
+  return Buffer.concat([Buffer.from(nonce), Buffer.from(encrypted)]).toString("base64")
+}
+
+export async function decryptData(
+  ciphertext: string,
+  dek: Uint8Array
+): Promise<Buffer> {
+  await sodium.ready
+  const buf = Buffer.from(ciphertext, "base64")
+  const nonce = buf.subarray(0, sodium.crypto_secretbox_NONCEBYTES)
+  const encrypted = buf.subarray(sodium.crypto_secretbox_NONCEBYTES)
+  const decrypted = sodium.crypto_secretbox_open_easy(encrypted, nonce, dek)
+  if (!decrypted) throw new Error("Data decryption failed")
+  return Buffer.from(decrypted)
+}

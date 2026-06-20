@@ -1,0 +1,2 @@
+[test]
+conditions = ["require", "default", "node"]
