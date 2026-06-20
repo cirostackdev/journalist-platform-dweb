@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { rmSync, existsSync } from "fs"
 import { join } from "path"
 import { getGlobals } from "@/lib/globals"
+import { updateVideoIndex } from "@/lib/publish"
 
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
   const { db, sessionStore, publicationDir } = getGlobals()
@@ -20,6 +21,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
 
   const pubDir = join(publicationDir, "videos", params.id)
   if (existsSync(pubDir)) rmSync(pubDir, { recursive: true, force: true })
+  updateVideoIndex(publicationDir)
 
   await db.updateVideoStatus(params.id, "draft", null)
   return NextResponse.json({ ok: true })

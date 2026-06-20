@@ -1,6 +1,6 @@
 import { marked } from "marked"
 import sanitizeHtml from "sanitize-html"
-import { writeFileSync, mkdirSync, readdirSync, readFileSync, statSync } from "fs"
+import { writeFileSync, mkdirSync, readdirSync, readFileSync, statSync, existsSync } from "fs"
 import { join } from "path"
 import { decryptDEK, decryptData } from "@journalist/shared/crypto"
 
@@ -160,7 +160,7 @@ export function updateIndex(publicationDir: string): void {
 </head>
 <body>
 <div class="page">
-  ${siteHeader("/", "Published via Tor · Encrypted")}
+  ${siteHeader("video-index.html", "Videos →")}
   <div class="index-hero">
     <div class="index-kicker">Investigative Journalism</div>
     <h1 class="index-h1">Published Reports</h1>
@@ -255,4 +255,176 @@ ${contentHtml}
   mkdirSync(articlesDir, { recursive: true })
   writeFileSync(join(articlesDir, `${opts.articleId}.html`), html, "utf8")
   updateIndex(opts.publicationDir)
+}
+
+// ── Video report publication ───────────────────────────────────────────────
+
+function escapeHtml(s: string): string {
+  return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;")
+}
+
+const VIDEO_CSS = `
+  .video-hero{position:relative;background:#000;width:100%;overflow:hidden;margin-bottom:0}
+  .video-hero video{width:100%;height:auto;display:block;max-height:480px}
+  .video-overlay{position:absolute;bottom:0;left:0;right:0;padding:20px 28px;
+    background:linear-gradient(to top,rgba(6,11,20,.95) 0%,transparent 100%)}
+  .video-kicker{font-size:10px;font-weight:700;color:var(--green);text-transform:uppercase;
+    letter-spacing:.12em;margin-bottom:8px}
+  .video-title{font-size:22px;font-weight:800;line-height:1.2;letter-spacing:-.02em;
+    text-shadow:0 2px 8px rgba(0,0,0,.8)}
+  .quality-bar{display:flex;align-items:center;justify-content:space-between;
+    padding:10px 28px;background:var(--surface);border-bottom:1px solid var(--border);font-size:11px}
+  .quality-badge{display:flex;align-items:center;gap:6px;color:var(--green)}
+  .quality-dot{width:6px;height:6px;border-radius:50%;background:var(--green)}
+  .quality-btns{display:flex;gap:6px}
+  .q-btn{padding:3px 10px;border:1px solid var(--border);border-radius:4px;
+    color:var(--text-muted);cursor:pointer;background:transparent;font-size:10px}
+  .q-btn.active,.q-btn:hover{border-color:var(--green);color:var(--green)}
+  .video-body{padding:28px 28px 60px;max-width:680px;margin:0 auto}
+  .video-desc p{font-family:Georgia,'Times New Roman',serif;font-size:16px;line-height:1.8;
+    color:#CBD5E1}
+  .video-desc p:first-child{font-size:18px;border-left:3px solid var(--green);
+    padding-left:16px;margin-bottom:1.5em;color:#E2E8F0}
+`
+
+export function publishVideoReport(opts: {
+  videoId: string
+  title: string
+  description: string
+  publicationDir: string
+  publishDate: Date
+}): void {
+  const { videoId, title, description, publicationDir, publishDate } = opts
+  const dateStr = formatDate(publishDate)
+  const outDir = join(publicationDir, "videos", videoId)
+  const thumbExists = existsSync(join(outDir, "thumbnail.jpg"))
+
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>${escapeHtml(title)}</title>
+<style>${DARK_CSS}${VIDEO_CSS}</style>
+</head>
+<body>
+<div class="page" style="padding:0;max-width:100%">
+  ${siteHeader("../../index.html", "← All reports")}
+  <div class="video-hero">
+    <video id="hls-player" controls${thumbExists ? ` poster="thumbnail.jpg"` : ""}></video>
+    <div class="video-overlay">
+      <div class="video-kicker">Video Report · Investigation · ${dateStr}</div>
+      <div class="video-title">${escapeHtml(title)}</div>
+    </div>
+  </div>
+  <div class="quality-bar">
+    <div class="quality-badge">
+      <div class="quality-dot"></div>
+      <span>Verified source footage</span>
+      <span style="color:var(--border-2)">·</span>
+      <span style="color:var(--text-subtle)">Metadata stripped</span>
+    </div>
+    <div class="quality-btns">
+      <button class="q-btn active" onclick="setQuality(this,'auto')">Auto</button>
+      <button class="q-btn" onclick="setQuality(this,'1080p')">1080p</button>
+      <button class="q-btn" onclick="setQuality(this,'720p')">720p</button>
+      <button class="q-btn" onclick="setQuality(this,'480p')">480p</button>
+    </div>
+  </div>
+  <div class="video-body">
+    <div class="video-desc"><p>${escapeHtml(description || "Verified source footage.")}</p></div>
+    <div style="margin-top:32px;padding-top:20px;border-top:1px solid var(--border);
+                display:flex;justify-content:space-between;align-items:center">
+      <a href="../../video-index.html" style="color:var(--green);text-decoration:none;font-size:12px">← All videos</a>
+      <span style="font-size:10px;color:var(--text-subtle)">This site is only accessible over Tor.</span>
+    </div>
+  </div>
+</div>
+<script src="../../hls.min.js"></script>
+<script>
+var player = document.getElementById('hls-player');
+function loadHls(url) {
+  if (window.Hls && Hls.isSupported()) {
+    var hls = new Hls(); hls.loadSource(url); hls.attachMedia(player);
+    player._hls = hls;
+  } else if (player.canPlayType('application/vnd.apple.mpegurl')) { player.src = url; }
+}
+function setQuality(btn, q) {
+  document.querySelectorAll('.q-btn').forEach(function(b){ b.classList.remove('active'); });
+  btn.classList.add('active');
+  if (player._hls) { player._hls.destroy(); player._hls = null; }
+  loadHls(q === 'auto' ? 'master.m3u8' : q + '/playlist.m3u8');
+}
+loadHls('master.m3u8');
+</script>
+</body>
+</html>`
+
+  writeFileSync(join(outDir, "index.html"), html, "utf8")
+}
+
+export function updateVideoIndex(publicationDir: string): void {
+  const videosDir = join(publicationDir, "videos")
+  if (!existsSync(videosDir)) {
+    writeFileSync(join(publicationDir, "video-index.html"), buildVideoIndexHtml([]), "utf8")
+    return
+  }
+
+  const entries: { id: string; title: string; date: Date; thumbExists: boolean }[] = []
+  for (const id of readdirSync(videosDir)) {
+    const indexPath = join(videosDir, id, "index.html")
+    if (!existsSync(indexPath)) continue
+    try {
+      const html = readFileSync(indexPath, "utf8")
+      const m = html.match(/<title>([^<]+)<\/title>/)
+      entries.push({ id, title: m ? m[1] : "Untitled", date: statSync(indexPath).mtime,
+        thumbExists: existsSync(join(videosDir, id, "thumbnail.jpg")) })
+    } catch { /* skip */ }
+  }
+  entries.sort((a, b) => b.date.getTime() - a.date.getTime())
+  writeFileSync(join(publicationDir, "video-index.html"), buildVideoIndexHtml(entries), "utf8")
+}
+
+function buildVideoIndexHtml(entries: { id: string; title: string; date: Date; thumbExists: boolean }[]): string {
+  const VIDEO_INDEX_CSS = `
+    .vitem{display:flex;gap:16px;align-items:flex-start;padding:20px 0;border-bottom:1px solid var(--border)}
+    .vthumb{width:120px;height:68px;object-fit:cover;border-radius:4px;flex-shrink:0;background:var(--surface);border:1px solid var(--border)}
+    .vthumb-ph{width:120px;height:68px;border-radius:4px;background:var(--surface);border:1px solid var(--border);flex-shrink:0}
+    .vkicker{font-size:10px;font-weight:600;color:var(--green);text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px}
+    .vtitle{font-size:16px;font-weight:700;margin-bottom:10px;line-height:1.3}
+    .vlink{font-size:12px;color:var(--green);text-decoration:none}
+    .vlink:hover{text-decoration:underline}
+  `
+  const items = entries.map(e => `
+    <div class="vitem">
+      ${e.thumbExists
+        ? `<img src="videos/${e.id}/thumbnail.jpg" class="vthumb" alt="" loading="lazy">`
+        : `<div class="vthumb-ph"></div>`}
+      <div>
+        <div class="vkicker">Video Report · ${formatDate(e.date)}</div>
+        <div class="vtitle">${escapeHtml(e.title)}</div>
+        <a href="videos/${e.id}/index.html" class="vlink">Watch →</a>
+      </div>
+    </div>`).join("")
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Video Reports</title>
+<style>${DARK_CSS}${VIDEO_INDEX_CSS}</style>
+</head>
+<body>
+<div class="page">
+  ${siteHeader("index.html", "← All reports")}
+  <h1 style="font-size:22px;font-weight:800;margin-bottom:8px">Video Reports</h1>
+  <p style="color:var(--text-subtle);font-size:13px;margin-bottom:28px">${entries.length} video${entries.length !== 1 ? "s" : ""} published</p>
+  ${items || '<p style="color:var(--text-subtle);padding:40px 0;text-align:center">No videos published yet.</p>'}
+  <div style="margin-top:40px;padding-top:20px;border-top:1px solid var(--border)">
+    <p style="font-size:10px;color:var(--text-subtle);text-align:center">This site is only accessible over Tor.</p>
+  </div>
+</div>
+</body>
+</html>`
 }
