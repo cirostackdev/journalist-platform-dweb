@@ -59,9 +59,15 @@
     <div class="card-title">Submit a Tip</div>
     <div class="card-subtitle">Your submission is encrypted and cannot be linked to you.</div>
 
+    <div class="form-group">
+      <label for="display-name-input" class="form-label">Your codename <span style="color:var(--green)">*</span></label>
+      <input type="text" id="display-name-input" name="displayName" class="form-input" placeholder="One word, e.g. Ghost" maxlength="32" required autocomplete="off" spellcheck="false" />
+      <div class="form-hint">Choose a single word you'll remember. Appears in published reports.</div>
+    </div>
+
     <div class="field">
-      <label class="field-label" for="text-input">Message</label>
-      <textarea id="text-input" name="text" placeholder="Describe what you know…"></textarea>
+      <label class="field-label" for="message-input">Message</label>
+      <textarea id="message-input" name="message" placeholder="Describe what you know…"></textarea>
     </div>
 
     <div class="field">
@@ -84,22 +90,29 @@
   </div>
 
   <!-- Success screen (hidden until submit succeeds) -->
-  <div class="success-card" id="submit-result">
+  <div class="success-screen" id="submit-result" style="display:none">
     <div class="success-icon">✓</div>
-    <div class="success-title">Submission Received</div>
-    <p class="success-subtitle">Save both credentials below. They will not be shown again.</p>
-    <div class="credential-box">
-      <div class="credential-label">Codename</div>
-      <div class="credential-value" id="codename-display"></div>
+    <h2 class="success-title">Submission received</h2>
+    <p class="success-subtitle">Write down all three items below. <strong>These will not be shown again.</strong></p>
+    <div class="credential-group">
+      <div class="credential-label">Your codename</div>
+      <div class="credential-value" id="result-display-name"></div>
+      <div class="credential-hint">Appears in published articles.</div>
     </div>
-    <div class="credential-box">
-      <div class="credential-label">Passphrase</div>
-      <div class="credential-value" id="passphrase-display"></div>
+    <div class="credential-group">
+      <div class="credential-label">Phrase 1 — Check-in phrase</div>
+      <div class="credential-value" id="diceware1-display"></div>
+      <div class="credential-hint">Used to identify yourself at check-in.</div>
     </div>
-    <div class="warning-banner">⚠ Write both down now. They will not be shown again. Do not store them digitally or take a screenshot.</div>
+    <div class="credential-group">
+      <div class="credential-label">Phrase 2 — Reply phrase</div>
+      <div class="credential-value" id="diceware2-display"></div>
+      <div class="credential-hint"><strong>Never share this.</strong> Once you read all replies, you may destroy this phrase — your original submission becomes permanently unreadable.</div>
+    </div>
   </div>
 
 </div>
+<script src="/portal-crypto.js"></script>
 <script src="/portal.js"></script>
 </body>
 </html>

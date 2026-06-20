@@ -23,13 +23,13 @@
     <div class="card-subtitle">Enter both credentials to read replies from the newsroom.</div>
 
     <div class="field">
-      <label class="field-label" for="codename-input">Codename</label>
-      <input type="text" id="codename-input" name="codename" placeholder="word · word · word" autocomplete="off" spellcheck="false">
+      <label class="field-label" for="diceware1-input">Phrase 1 — Check-in phrase</label>
+      <input type="text" id="diceware1-input" name="diceware1" placeholder="word · word · word · word · word · word · word" autocomplete="off" spellcheck="false">
     </div>
 
     <div class="field">
-      <label class="field-label" for="passphrase-input">Passphrase</label>
-      <input type="password" id="passphrase-input" name="passphrase" placeholder="XXXX-XXXX-XXXX" autocomplete="off" spellcheck="false" style="font-family:monospace;letter-spacing:.05em;">
+      <label class="field-label" for="diceware2-input">Phrase 2 — Reply phrase</label>
+      <input type="password" id="diceware2-input" name="diceware2" placeholder="word · word · word · word · word · word · word" autocomplete="off" spellcheck="false" style="font-family:monospace;letter-spacing:.05em;">
     </div>
 
     <div id="checkin-error" class="error-msg"></div>
@@ -52,6 +52,7 @@
   </div>
 
 </div>
+<script src="/portal-crypto.js"></script>
 <script src="/portal.js"></script>
 </body>
 </html>
