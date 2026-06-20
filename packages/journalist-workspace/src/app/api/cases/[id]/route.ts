@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { getGlobals } from "@/lib/globals"
 import { decryptDEK, decryptData } from "@journalist/shared/crypto"
 import { getSubmissionContent } from "@/lib/portal-db"
+import { canAccessCase } from "@/lib/caseAccess"
 
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
   const { db, sessionStore, masterKey, portalDbPath } = getGlobals()
@@ -10,6 +11,9 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   const caseData = await db.getCase(params.id)
   if (!caseData) return NextResponse.json({ error: "Not found" }, { status: 404 })
+  if (!canAccessCase(session, caseData)) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+  }
 
   // Decrypt notes
   const rawNotes = await db.getCaseNotes(params.id)

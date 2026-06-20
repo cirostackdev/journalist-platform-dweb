@@ -3,6 +3,7 @@ import { readFileSync } from "fs"
 import { getGlobals } from "@/lib/globals"
 import { sealedBoxDecrypt, decryptData } from "@journalist/shared/crypto"
 import { getFileForDownload } from "@/lib/portal-db"
+import { canAccessCase } from "@/lib/caseAccess"
 
 export async function GET(
   req: NextRequest,
@@ -10,7 +11,8 @@ export async function GET(
 ) {
   const { db, sessionStore, newsroomPublicKey, newsroomPrivateKey, portalDbPath } = getGlobals()
   const token = req.cookies.get("session")?.value ?? ""
-  if (!sessionStore.getSession(token)) {
+  const session = sessionStore.getSession(token)
+  if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 
@@ -21,6 +23,9 @@ export async function GET(
 
   const caseData = await db.getCase(params.id)
   if (!caseData) return NextResponse.json({ error: "Not found" }, { status: 404 })
+  if (!canAccessCase(session, caseData)) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+  }
 
   const fileInfo = await getFileForDownload(caseData.submission_ref, fileIndex, portalDbPath)
   if (!fileInfo) return NextResponse.json({ error: "File not found" }, { status: 404 })

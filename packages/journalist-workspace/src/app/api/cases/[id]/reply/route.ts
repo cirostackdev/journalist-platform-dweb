@@ -3,6 +3,7 @@ import { getGlobals } from "@/lib/globals"
 import { boxEncrypt } from "@journalist/shared/crypto"
 import { writeQueueMessage } from "@journalist/shared/queue"
 import { getSourcePublicKeyForSubmission } from "@/lib/portal-db"
+import { canAccessCase } from "@/lib/caseAccess"
 
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
   const { db, sessionStore, newsroomPublicKey, newsroomPrivateKey, queueKey, toPortalQueueDir, portalDbPath } =
@@ -18,6 +19,9 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
 
   const caseData = await db.getCase(params.id)
   if (!caseData) return NextResponse.json({ error: "Not found" }, { status: 404 })
+  if (!canAccessCase(session, caseData)) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+  }
 
   const sourcePKHex = await getSourcePublicKeyForSubmission(caseData.submission_ref, portalDbPath)
   if (!sourcePKHex) {

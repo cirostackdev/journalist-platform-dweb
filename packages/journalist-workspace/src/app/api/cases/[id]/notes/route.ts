@@ -1,11 +1,18 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getGlobals } from "@/lib/globals"
 import { generateDEK, encryptDEK, encryptData, decryptDEK, decryptData } from "@journalist/shared/crypto"
+import { canAccessCase } from "@/lib/caseAccess"
 
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
   const { db, sessionStore, masterKey } = getGlobals()
   const token = req.cookies.get("session")?.value ?? ""
-  if (!sessionStore.getSession(token)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  const session = sessionStore.getSession(token)
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  const caseData = await db.getCase(params.id)
+  if (!caseData) return NextResponse.json({ error: "Not found" }, { status: 404 })
+  if (!canAccessCase(session, caseData)) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+  }
   const notes = await db.getCaseNotes(params.id)
   const decrypted = await Promise.all(notes.map(async (note) => {
     try {
@@ -24,6 +31,11 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   const token = req.cookies.get("session")?.value ?? ""
   const session = sessionStore.getSession(token)
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  const caseData = await db.getCase(params.id)
+  if (!caseData) return NextResponse.json({ error: "Not found" }, { status: 404 })
+  if (!canAccessCase(session, caseData)) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+  }
   const body = await req.json()
   const text = body?.text as string | undefined
   if (!text?.trim()) return NextResponse.json({ error: "text required" }, { status: 400 })
