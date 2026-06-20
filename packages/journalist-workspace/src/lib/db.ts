@@ -55,11 +55,13 @@ export type Article = {
   id: string
   case_id: string
   author_id: string
+  title_enc: string | null
+  title_dek: string | null
   encrypted_body: string | null
   encrypted_dek: string | null
   status: ArticleStatus
-  published_at: Date | null
-  created_at: Date
+  published_at: string | null
+  created_at: string
 }
 
 export interface Db {
@@ -78,7 +80,7 @@ export interface Db {
   insertArticle(caseId: string, authorId: string): Promise<string>
   getArticle(id: string): Promise<Article | null>
   getArticlesByCase(caseId: string): Promise<Article[]>
-  updateArticle(id: string, encryptedBody: string, encryptedDek: string): Promise<void>
+  updateArticle(id: string, encryptedBody: string, encryptedDek: string, titleEnc?: string, titleDek?: string): Promise<void>
   updateArticleStatus(id: string, status: ArticleStatus): Promise<void>
   publishArticle(id: string): Promise<void>
   deleteArticle(id: string): Promise<void>
@@ -129,12 +131,17 @@ const SCHEMA = `
     id TEXT PRIMARY KEY,
     case_id TEXT NOT NULL REFERENCES cases(id),
     author_id TEXT NOT NULL REFERENCES users(id),
+    title_enc TEXT,
+    title_dek TEXT,
     encrypted_body TEXT,
     encrypted_dek TEXT,
     status TEXT NOT NULL DEFAULT 'draft' CHECK(status IN ('draft', 'review', 'published')),
     published_at TIMESTAMPTZ,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
   );
+
+  ALTER TABLE articles ADD COLUMN IF NOT EXISTS title_enc TEXT;
+  ALTER TABLE articles ADD COLUMN IF NOT EXISTS title_dek TEXT;
 
   CREATE TABLE IF NOT EXISTS videos (
     id            TEXT PRIMARY KEY,
@@ -257,11 +264,18 @@ export async function openDb(connectionString: string): Promise<Db> {
       return res.rows as Article[]
     },
 
-    async updateArticle(id, encryptedBody, encryptedDek) {
-      await pool.query(
-        "UPDATE articles SET encrypted_body = $1, encrypted_dek = $2 WHERE id = $3",
-        [encryptedBody, encryptedDek, id]
-      )
+    async updateArticle(id, encryptedBody, encryptedDek, titleEnc?, titleDek?) {
+      if (titleEnc !== undefined && titleDek !== undefined) {
+        await pool.query(
+          "UPDATE articles SET encrypted_body = $1, encrypted_dek = $2, title_enc = $3, title_dek = $4 WHERE id = $5",
+          [encryptedBody, encryptedDek, titleEnc, titleDek, id]
+        )
+      } else {
+        await pool.query(
+          "UPDATE articles SET encrypted_body = $1, encrypted_dek = $2 WHERE id = $3",
+          [encryptedBody, encryptedDek, id]
+        )
+      }
     },
 
     async updateArticleStatus(id, status) {

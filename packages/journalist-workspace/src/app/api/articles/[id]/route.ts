@@ -21,6 +21,17 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
     }
   }
 
+  let title: string | null = null
+  if (article.title_enc && article.title_dek) {
+    try {
+      const titleDek = await decryptDEK(article.title_dek, masterKey)
+      const titleBuf = await decryptData(article.title_enc, titleDek)
+      title = titleBuf.toString("utf8")
+    } catch {
+      title = null
+    }
+  }
+
   return NextResponse.json({
     article: {
       id: article.id,
@@ -30,6 +41,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
       published_at: article.published_at,
       created_at: (article as any).created_at ?? null,
       body,
+      title,
     },
   })
 }
@@ -51,12 +63,21 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
   if (article.status === "review" && session.role !== "admin") {
     return NextResponse.json({ error: "Article is under editorial review and cannot be edited." }, { status: 423 })
   }
-  const body = await req.json()
-  if (body?.body === undefined) return NextResponse.json({ error: "body required" }, { status: 400 })
+  const bodyJson = await req.json()
+  if (bodyJson?.body === undefined) return NextResponse.json({ error: "body required" }, { status: 400 })
   const dek = await generateDEK()
   const encDek = await encryptDEK(dek, masterKey)
-  const encBody = await encryptData(body.body as string, dek)
-  await db.updateArticle(params.id, encBody, encDek)
+  const encBody = await encryptData(bodyJson.body as string, dek)
+
+  let titleEnc: string | undefined
+  let titleDek: string | undefined
+  if (typeof bodyJson.title === "string") {
+    const tDek = await generateDEK()
+    titleDek = await encryptDEK(tDek, masterKey)
+    titleEnc = await encryptData(bodyJson.title, tDek)
+  }
+
+  await db.updateArticle(params.id, encBody, encDek, titleEnc, titleDek)
   return NextResponse.json({ ok: true })
 }
 

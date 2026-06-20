@@ -12,6 +12,7 @@ interface Article {
   status: "draft" | "review" | "published"
   created_at: string
   body?: string
+  title?: string | null
 }
 
 const STATUS_BADGE: Record<string, string> = {
@@ -38,6 +39,7 @@ export default function ArticleEditorPage({ params }: { params: { id: string } }
 
   const [article, setArticle] = useState<Article | null>(null)
   const [body, setBody] = useState("")
+  const [title, setTitle] = useState("")
   const [loadError, setLoadError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [role, setRole] = useState<string | null>(null)
@@ -70,6 +72,7 @@ export default function ArticleEditorPage({ params }: { params: { id: string } }
         setArticle(data.article)
         // body is encrypted server-side; leave textarea blank for new content
         setBody(data.article?.body ?? "")
+        setTitle(data.article?.title ?? "")
       }
     } catch {
       setLoadError("Failed to load article")
@@ -96,7 +99,7 @@ export default function ArticleEditorPage({ params }: { params: { id: string } }
       const res = await fetch(`/api/articles/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ body }),
+        body: JSON.stringify({ body, title }),
       })
       const data = await res.json()
       if (data.error) {
@@ -213,7 +216,7 @@ export default function ArticleEditorPage({ params }: { params: { id: string } }
 
   const isEditorOrAdmin = role === "editor" || role === "admin"
   const isJournalist = role === "journalist"
-  const articleTitle = article ? `Article: ${id.substring(0, 8)}…` : "Article Editor"
+  const articleTitle = title ? title : (article ? `Article: ${id.substring(0, 8)}…` : "Article Editor")
 
   return (
     <WorkspaceShell title={articleTitle}>
@@ -257,6 +260,16 @@ export default function ArticleEditorPage({ params }: { params: { id: string } }
 
             {/* Editor */}
             <form onSubmit={handleSave} className="space-y-3">
+              <label className="block text-sm font-semibold text-white">
+                Title
+              </label>
+              <input
+                type="text"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="Article title…"
+                className="bg-gray-700 border border-gray-600 text-white rounded-lg px-3 py-2 w-full text-sm focus:outline-none focus:border-indigo-500 placeholder-gray-500"
+              />
               <label className="block text-sm font-semibold text-white">
                 Article body (Markdown)
               </label>
