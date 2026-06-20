@@ -2,9 +2,10 @@ import { Router } from "express"
 import multer from "multer"
 import argon2 from "argon2"
 import { readFileSync, writeFileSync, mkdirSync, unlinkSync } from "fs"
+import { join } from "path"
 import type { Db } from "../db"
 import { generateCodename } from "../wordlist"
-import { encryptData, generateDEK, encryptDEK } from "@journalist/shared/crypto"
+import { encryptData, generateDEK, encryptDEK, generatePassphrase } from "@journalist/shared/crypto"
 import { writeQueueMessage } from "@journalist/shared/queue"
 
 type SubmitRouterOptions = {
@@ -18,7 +19,6 @@ type SubmitRouterOptions = {
 
 export function createSubmitRouter(opts: SubmitRouterOptions): Router {
   const router = Router()
-  const submissionsDir = opts.submissionsDir ?? "/var/secure-submissions"
   const upload = multer({
     dest: opts.uploadDir ?? "/tmp/uploads",
     limits: { fileSize: 256 * 1024 * 1024, files: 10 },
@@ -26,7 +26,6 @@ export function createSubmitRouter(opts: SubmitRouterOptions): Router {
 
   router.post("/", upload.array("files"), async (req, res) => {
     const text = req.body?.text as string | undefined
-    const passphrase = req.body?.passphrase as string | undefined
     const files = (req.files ?? []) as Express.Multer.File[]
 
     if (!text && files.length === 0) {
@@ -43,15 +42,14 @@ export function createSubmitRouter(opts: SubmitRouterOptions): Router {
         parallelism: 1,
       })
 
-      let passphraseHash: string | undefined
-      if (passphrase?.trim()) {
-        passphraseHash = await argon2.hash(passphrase, {
-          type: argon2.argon2id,
-          memoryCost: 65536,
-          timeCost: 3,
-          parallelism: 1,
-        })
-      }
+      // Auto-generate passphrase — sources do not choose their own
+      const passphrase = generatePassphrase()
+      const passphraseHash = await argon2.hash(passphrase, {
+        type: argon2.argon2id,
+        memoryCost: 65536,
+        timeCost: 3,
+        parallelism: 1,
+      })
 
       const sourceId = opts.db.insertSource(codenameHash, passphraseHash)
 
@@ -67,26 +65,23 @@ export function createSubmitRouter(opts: SubmitRouterOptions): Router {
 
       const submissionId = opts.db.insertSubmission(sourceId, encryptedText)
 
-      // Encrypt each uploaded file and store securely; remove plaintext temp file
-      if (files.length > 0) {
-        const submissionDir = `${submissionsDir}/${submissionId}`
+      // Encrypt uploaded files
+      const submissionsDir = opts.submissionsDir ?? "/var/secure-submissions"
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i]
+        const submissionDir = join(submissionsDir, submissionId)
         mkdirSync(submissionDir, { recursive: true })
-
-        for (let i = 0; i < files.length; i++) {
-          const file = files[i]
-          const bytes = readFileSync(file.path)
-          const dek = await generateDEK()
-          const encryptedContent = await encryptData(bytes.toString("base64"), dek)
-          const encryptedDek = await encryptDEK(dek, opts.masterKey)
-
-          writeFileSync(`${submissionDir}/${i}.enc`, encryptedContent, "utf8")
-          writeFileSync(
-            `${submissionDir}/${i}.key`,
-            JSON.stringify({ encryptedDek, originalName: file.originalname }),
-            "utf8"
-          )
-          unlinkSync(file.path)
-        }
+        const bytes = readFileSync(file.path)
+        const dek = await generateDEK()
+        const encDek = await encryptDEK(dek, opts.masterKey)
+        const encContent = await encryptData(bytes.toString("base64"), dek)
+        writeFileSync(join(submissionDir, `${i}.enc`), encContent, "utf8")
+        writeFileSync(
+          join(submissionDir, `${i}.key`),
+          JSON.stringify({ encryptedDek: encDek, originalName: file.originalname }),
+          "utf8"
+        )
+        unlinkSync(file.path)
       }
 
       await writeQueueMessage(opts.queueDir, opts.queueKey, {
@@ -97,7 +92,7 @@ export function createSubmitRouter(opts: SubmitRouterOptions): Router {
         fileCount: files.length,
       })
 
-      res.status(200).json({ codename, submissionId })
+      res.status(200).json({ codename, passphrase, submissionId })
     } catch (err) {
       console.error("Submit error:", err)
       res.status(500).json({ error: "Submission failed." })

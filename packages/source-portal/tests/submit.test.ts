@@ -19,7 +19,7 @@ async function buildApp(submissionsDir?: string) {
 }
 
 describe("POST /submit", () => {
-  test("returns 200 with codename on valid text submission", async () => {
+  test("returns 200 with codename, passphrase, and submissionId on valid text submission", async () => {
     const { app } = await buildApp()
     const server = app.listen(0)
     const port = (server.address() as { port: number }).port
@@ -33,6 +33,7 @@ describe("POST /submit", () => {
     expect(r.status).toBe(200)
     expect(body.codename).toMatch(/^[a-z]+-[a-z]+-[a-z]+$/)
     expect(body.submissionId).toBeString()
+    expect(body.passphrase).toMatch(/^[A-Z2-9]{4}-[A-Z2-9]{4}-[A-Z2-9]{4}$/)
   })
 
   test("returns 400 when neither text nor files provided", async () => {
@@ -48,6 +49,27 @@ describe("POST /submit", () => {
     expect(r.status).toBe(400)
   })
 
+  test("two submissions produce different passphrases", async () => {
+    const { app } = await buildApp()
+    const server = app.listen(0)
+    const port = (server.address() as { port: number }).port
+    const [r1, r2] = await Promise.all([
+      fetch(`http://localhost:${port}/submit`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: "tip one" }),
+      }),
+      fetch(`http://localhost:${port}/submit`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: "tip two" }),
+      }),
+    ])
+    const [b1, b2] = await Promise.all([r1.json(), r2.json()])
+    server.close()
+    expect(b1.passphrase).not.toBe(b2.passphrase)
+  })
+
   test("encrypts uploaded files and removes temp files", async () => {
     const submissionsDir = mkdtempSync(`${tmpdir()}/submit-test-`)
     try {
@@ -58,49 +80,28 @@ describe("POST /submit", () => {
       const form = new FormData()
       form.append("files", new Blob(["secret file contents"]), "secret.txt")
 
-      const r = await fetch(`http://localhost:${port}/submit`, {
-        method: "POST",
-        body: form,
-      })
+      const r = await fetch(`http://localhost:${port}/submit`, { method: "POST", body: form })
       const body = await r.json()
       server.close()
 
       expect(r.status).toBe(200)
       expect(body.submissionId).toBeString()
+      expect(body.passphrase).toMatch(/^[A-Z2-9]{4}-[A-Z2-9]{4}-[A-Z2-9]{4}$/)
 
-      // Verify encrypted files were written under submissionsDir
       const submissionDir = `${submissionsDir}/${body.submissionId}`
       const files = readdirSync(submissionDir)
       expect(files).toContain("0.enc")
       expect(files).toContain("0.key")
 
-      // Verify .enc content is a non-empty base64 string (not plaintext)
       const encContent = readFileSync(`${submissionDir}/0.enc`, "utf8")
       expect(encContent.length).toBeGreaterThan(0)
       expect(encContent).not.toContain("secret file contents")
 
-      // Verify .key sidecar has expected structure
       const keyContent = JSON.parse(readFileSync(`${submissionDir}/0.key`, "utf8"))
       expect(keyContent.encryptedDek).toBeString()
       expect(keyContent.originalName).toBe("secret.txt")
     } finally {
       rmSync(submissionsDir, { recursive: true, force: true })
     }
-  })
-
-  test("returns 200 with codename and submissionId when submitting with passphrase", async () => {
-    const { app } = await buildApp()
-    const server = app.listen(0)
-    const port = (server.address() as { port: number }).port
-    const r = await fetch(`http://localhost:${port}/submit`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text: "this is my tip", passphrase: "secret-phrase-123" }),
-    })
-    const body = await r.json()
-    server.close()
-    expect(r.status).toBe(200)
-    expect(body.codename).toMatch(/^[a-z]+-[a-z]+-[a-z]+$/)
-    expect(body.submissionId).toBeString()
   })
 })
