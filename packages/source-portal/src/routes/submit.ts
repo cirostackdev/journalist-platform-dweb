@@ -19,9 +19,10 @@ type SubmitRouterOptions = {
 }
 
 export function createSubmitRouter(opts: SubmitRouterOptions): Router {
+  mkdirSync(opts.uploadDir ?? "/var/secure/upload-tmp", { recursive: true })
   const router = Router()
   const upload = multer({
-    dest: opts.uploadDir ?? "/tmp/uploads",
+    dest: opts.uploadDir ?? "/var/secure/upload-tmp",
     limits: { fileSize: 256 * 1024 * 1024, files: 10 },
   })
 
@@ -76,16 +77,15 @@ export function createSubmitRouter(opts: SubmitRouterOptions): Router {
         const bytes = readFileSync(file.path)
         const dek = await generateDEK()
         const encDek = await encryptDEK(dek, opts.masterKey)
-        const encContent = await encryptData(bytes.toString("base64"), dek)
+        const encContent = await encryptData(bytes, dek)
         const filePath = join(submissionDir, `${i}.enc`)
         writeFileSync(filePath, encContent, "utf8")
+        const encFilename = await encryptData(file.originalname, dek)
         writeFileSync(
           join(submissionDir, `${i}.key`),
-          JSON.stringify({ encryptedDek: encDek, originalName: file.originalname }),
+          JSON.stringify({ encryptedDek: encDek, encryptedFilename: encFilename }),
           "utf8"
         )
-        // Encrypt the original filename too, so the DB record doesn't leak it
-        const encFilename = await encryptData(file.originalname, dek)
         opts.db.insertSubmissionFile(
           submissionId,
           encFilename,
@@ -103,7 +103,7 @@ export function createSubmitRouter(opts: SubmitRouterOptions): Router {
         fileCount: files.length,
       })
 
-      res.status(200).json({ codename, passphrase, submissionId })
+      res.status(200).json({ codename, passphrase })
     } catch (err) {
       console.error("Submit error:", err)
       res.status(500).json({ error: "Submission failed." })

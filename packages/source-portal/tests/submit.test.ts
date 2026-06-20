@@ -19,7 +19,7 @@ async function buildApp(submissionsDir?: string) {
 }
 
 describe("POST /submit", () => {
-  test("returns 200 with codename, passphrase, and submissionId on valid text submission", async () => {
+  test("returns 200 with codename and passphrase (no submissionId) on valid text submission", async () => {
     const { app } = await buildApp()
     const server = app.listen(0)
     const port = (server.address() as { port: number }).port
@@ -32,7 +32,7 @@ describe("POST /submit", () => {
     server.close()
     expect(r.status).toBe(200)
     expect(body.codename).toMatch(/^[a-z]+-[a-z]+-[a-z]+$/)
-    expect(body.submissionId).toBeString()
+    expect(body.submissionId).toBeUndefined()
     expect(body.passphrase).toMatch(/^[A-Z2-9]{4}-[A-Z2-9]{4}-[A-Z2-9]{4}$/)
   })
 
@@ -85,10 +85,13 @@ describe("POST /submit", () => {
       server.close()
 
       expect(r.status).toBe(200)
-      expect(body.submissionId).toBeString()
+      expect(body.submissionId).toBeUndefined()
       expect(body.passphrase).toMatch(/^[A-Z2-9]{4}-[A-Z2-9]{4}-[A-Z2-9]{4}$/)
 
-      const submissionDir = `${submissionsDir}/${body.submissionId}`
+      // submissionId is not in the response — find the created submission dir by listing
+      const submissionDirs = readdirSync(submissionsDir)
+      expect(submissionDirs.length).toBe(1)
+      const submissionDir = `${submissionsDir}/${submissionDirs[0]}`
       const files = readdirSync(submissionDir)
       expect(files).toContain("0.enc")
       expect(files).toContain("0.key")
@@ -99,7 +102,8 @@ describe("POST /submit", () => {
 
       const keyContent = JSON.parse(readFileSync(`${submissionDir}/0.key`, "utf8"))
       expect(keyContent.encryptedDek).toBeString()
-      expect(keyContent.originalName).toBe("secret.txt")
+      expect(keyContent.encryptedFilename).toBeString()
+      expect(keyContent.originalName).toBeUndefined()
     } finally {
       rmSync(submissionsDir, { recursive: true, force: true })
     }

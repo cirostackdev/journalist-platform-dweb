@@ -12,6 +12,11 @@ type CheckinRouterOptions = {
 export function createCheckinRouter(opts: CheckinRouterOptions): Router {
   const router = Router()
 
+  const authFail = async (res: any) => {
+    await new Promise((r) => setTimeout(r, 500))
+    res.status(401).json({ error: "Invalid credentials." })
+  }
+
   router.post("/", async (req, res) => {
     const { codename } = req.body ?? {}
     const passphrase = req.body?.passphrase as string | undefined
@@ -40,28 +45,22 @@ export function createCheckinRouter(opts: CheckinRouterOptions): Router {
       }
 
       if (!source) {
-        await new Promise((r) => setTimeout(r, 500))
-        res.status(401).json({ error: "Invalid codename." })
-        return
+        return authFail(res)
       }
 
       // For the fast path (source found by HMAC), still do argon2 verify to confirm
       if (!await argon2.verify(source.codename_hash, codename)) {
-        await new Promise((r) => setTimeout(r, 500))
-        res.status(401).json({ error: "Invalid codename." })
-        return
+        return authFail(res)
       }
 
       // Verify passphrase if source has one set
       if (source.passphrase_hash) {
         if (!passphrase?.trim()) {
-          res.status(401).json({ error: "Passphrase required." })
-          return
+          return authFail(res)
         }
         const passphraseOk = await argon2.verify(source.passphrase_hash, passphrase)
         if (!passphraseOk) {
-          res.status(401).json({ error: "Invalid passphrase." })
-          return
+          return authFail(res)
         }
       }
 
