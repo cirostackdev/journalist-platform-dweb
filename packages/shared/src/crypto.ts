@@ -2,6 +2,7 @@ import { createRequire } from "module"
 import { randomBytes } from "crypto"
 const _require = createRequire(import.meta.url)
 const sodium = _require("libsodium-wrappers") as typeof import("libsodium-wrappers")
+const sodiumSumo = _require("libsodium-wrappers-sumo") as typeof import("libsodium-wrappers-sumo")
 import argon2 from "argon2"
 
 export async function deriveMasterKey(
@@ -103,4 +104,90 @@ export function generatePassphrase(): string {
     // reject bytes >= 248 to eliminate modulo bias
   }
   return `${chars.slice(0, 4).join("")}-${chars.slice(4, 8).join("")}-${chars.slice(8, 12).join("")}`
+}
+
+// Fixed 16-byte salt for source keypair derivation ("src-keypair-v1  ")
+const KEYPAIR_SALT = new Uint8Array([
+  0x73, 0x72, 0x63, 0x2d, 0x6b, 0x65, 0x79, 0x70,
+  0x61, 0x69, 0x72, 0x2d, 0x76, 0x31, 0x20, 0x20,
+])
+
+export async function generateNewsroomKeypair(): Promise<{
+  publicKey: Uint8Array
+  privateKey: Uint8Array
+}> {
+  await sodium.ready
+  return sodium.crypto_box_keypair()
+}
+
+export async function deriveSourceKeypair(
+  diceware2: string,
+  opts: { isTest?: boolean } = {}
+): Promise<{ publicKey: Uint8Array; privateKey: Uint8Array }> {
+  await sodiumSumo.ready
+  const isTest = opts.isTest ?? process.env.NODE_ENV === "test"
+  const opslimit = isTest
+    ? sodiumSumo.crypto_pwhash_OPSLIMIT_MIN
+    : sodiumSumo.crypto_pwhash_OPSLIMIT_INTERACTIVE
+  const memlimit = isTest
+    ? sodiumSumo.crypto_pwhash_MEMLIMIT_MIN
+    : sodiumSumo.crypto_pwhash_MEMLIMIT_INTERACTIVE
+  const seed = sodiumSumo.crypto_pwhash(
+    32,
+    Buffer.from(diceware2, "utf8"),
+    KEYPAIR_SALT,
+    opslimit,
+    memlimit,
+    sodiumSumo.crypto_pwhash_ALG_ARGON2ID13
+  )
+  return sodiumSumo.crypto_box_seed_keypair(seed)
+}
+
+export async function sealedBoxEncrypt(
+  plaintext: Buffer,
+  recipientPublicKey: Uint8Array
+): Promise<string> {
+  await sodium.ready
+  const ciphertext = sodium.crypto_box_seal(plaintext, recipientPublicKey)
+  return Buffer.from(ciphertext).toString("base64")
+}
+
+export async function sealedBoxDecrypt(
+  ciphertext: string,
+  publicKey: Uint8Array,
+  privateKey: Uint8Array
+): Promise<Buffer> {
+  await sodium.ready
+  const buf = Buffer.from(ciphertext, "base64")
+  const plain = sodium.crypto_box_seal_open(buf, publicKey, privateKey)
+  if (!plain) throw new Error("sealedBoxDecrypt: decryption failed — wrong key or corrupted data")
+  return Buffer.from(plain)
+}
+
+export async function boxEncrypt(
+  plaintext: Buffer,
+  recipientPublicKey: Uint8Array,
+  senderPrivateKey: Uint8Array
+): Promise<string> {
+  await sodium.ready
+  const nonce = sodium.randombytes_buf(sodium.crypto_box_NONCEBYTES)
+  const ciphertext = sodium.crypto_box_easy(plaintext, nonce, recipientPublicKey, senderPrivateKey)
+  return Buffer.concat([Buffer.from(nonce), Buffer.from(ciphertext)]).toString("base64")
+}
+
+export async function boxDecrypt(
+  ciphertext: string,
+  senderPublicKey: Uint8Array,
+  recipientPrivateKey: Uint8Array
+): Promise<Buffer> {
+  await sodium.ready
+  const buf = Buffer.from(ciphertext, "base64")
+  if (buf.length <= sodium.crypto_box_NONCEBYTES) {
+    throw new Error("boxDecrypt: ciphertext too short")
+  }
+  const nonce = buf.subarray(0, sodium.crypto_box_NONCEBYTES)
+  const data = buf.subarray(sodium.crypto_box_NONCEBYTES)
+  const plain = sodium.crypto_box_open_easy(data, nonce, senderPublicKey, recipientPrivateKey)
+  if (!plain) throw new Error("boxDecrypt: decryption failed — wrong key or corrupted data")
+  return Buffer.from(plain)
 }

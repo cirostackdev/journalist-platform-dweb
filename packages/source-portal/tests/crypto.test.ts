@@ -7,6 +7,12 @@ import {
   encryptData,
   decryptData,
   generatePassphrase,
+  generateNewsroomKeypair,
+  deriveSourceKeypair,
+  sealedBoxEncrypt,
+  sealedBoxDecrypt,
+  boxEncrypt,
+  boxDecrypt,
 } from "@journalist/shared/crypto"
 
 describe("deriveMasterKey", () => {
@@ -106,5 +112,100 @@ describe("generatePassphrase", () => {
       const p = generatePassphrase()
       expect(p).not.toMatch(/[01IOL]/)
     }
+  })
+})
+
+describe("generateNewsroomKeypair", () => {
+  test("returns 32-byte public and private keys", async () => {
+    const { publicKey, privateKey } = await generateNewsroomKeypair()
+    expect(publicKey).toHaveLength(32)
+    expect(privateKey).toHaveLength(32)
+  })
+
+  test("two calls produce different keypairs", async () => {
+    const a = await generateNewsroomKeypair()
+    const b = await generateNewsroomKeypair()
+    expect(Buffer.from(a.publicKey).equals(Buffer.from(b.publicKey))).toBe(false)
+  })
+})
+
+describe("deriveSourceKeypair", () => {
+  test("returns 32-byte public and private keys", async () => {
+    const { publicKey, privateKey } = await deriveSourceKeypair(
+      "one two three four five six seven", { isTest: true }
+    )
+    expect(publicKey).toHaveLength(32)
+    expect(privateKey).toHaveLength(32)
+  })
+
+  test("same diceware2 produces same keypair (deterministic)", async () => {
+    const phrase = "alpha beta gamma delta epsilon zeta eta"
+    const a = await deriveSourceKeypair(phrase, { isTest: true })
+    const b = await deriveSourceKeypair(phrase, { isTest: true })
+    expect(Buffer.from(a.publicKey).equals(Buffer.from(b.publicKey))).toBe(true)
+    expect(Buffer.from(a.privateKey).equals(Buffer.from(b.privateKey))).toBe(true)
+  })
+
+  test("different diceware2 produces different keypairs", async () => {
+    const a = await deriveSourceKeypair("one two three four five six seven", { isTest: true })
+    const b = await deriveSourceKeypair("eight nine ten eleven twelve thirteen fourteen", { isTest: true })
+    expect(Buffer.from(a.publicKey).equals(Buffer.from(b.publicKey))).toBe(false)
+  })
+})
+
+describe("sealedBoxEncrypt / sealedBoxDecrypt", () => {
+  test("round-trips a message", async () => {
+    const { publicKey, privateKey } = await generateNewsroomKeypair()
+    const plaintext = Buffer.from("top secret tip")
+    const ciphertext = await sealedBoxEncrypt(plaintext, publicKey)
+    const decrypted = await sealedBoxDecrypt(ciphertext, publicKey, privateKey)
+    expect(decrypted.toString("utf8")).toBe("top secret tip")
+  })
+
+  test("two encryptions of same plaintext produce different ciphertexts", async () => {
+    const { publicKey } = await generateNewsroomKeypair()
+    const a = await sealedBoxEncrypt(Buffer.from("tip"), publicKey)
+    const b = await sealedBoxEncrypt(Buffer.from("tip"), publicKey)
+    expect(a).not.toBe(b)
+  })
+
+  test("decryption fails with wrong private key", async () => {
+    const real = await generateNewsroomKeypair()
+    const wrong = await generateNewsroomKeypair()
+    const ct = await sealedBoxEncrypt(Buffer.from("tip"), real.publicKey)
+    await expect(sealedBoxDecrypt(ct, real.publicKey, wrong.privateKey)).rejects.toThrow()
+  })
+})
+
+describe("boxEncrypt / boxDecrypt", () => {
+  test("round-trips a message between newsroom and source", async () => {
+    const newsroom = await generateNewsroomKeypair()
+    const source = await deriveSourceKeypair("one two three four five six seven", { isTest: true })
+    const plaintext = Buffer.from("reply from journalist")
+    const ct = await boxEncrypt(plaintext, source.publicKey, newsroom.privateKey)
+    const decrypted = await boxDecrypt(ct, newsroom.publicKey, source.privateKey)
+    expect(decrypted.toString("utf8")).toBe("reply from journalist")
+  })
+
+  test("two encryptions produce different ciphertexts (random nonce)", async () => {
+    const newsroom = await generateNewsroomKeypair()
+    const source = await deriveSourceKeypair("one two three four five six seven", { isTest: true })
+    const a = await boxEncrypt(Buffer.from("reply"), source.publicKey, newsroom.privateKey)
+    const b = await boxEncrypt(Buffer.from("reply"), source.publicKey, newsroom.privateKey)
+    expect(a).not.toBe(b)
+  })
+
+  test("decryption fails with wrong sender public key", async () => {
+    const newsroom = await generateNewsroomKeypair()
+    const wrong = await generateNewsroomKeypair()
+    const source = await deriveSourceKeypair("one two three four five six seven", { isTest: true })
+    const ct = await boxEncrypt(Buffer.from("reply"), source.publicKey, newsroom.privateKey)
+    await expect(boxDecrypt(ct, wrong.publicKey, source.privateKey)).rejects.toThrow()
+  })
+
+  test("boxDecrypt throws on truncated ciphertext", async () => {
+    const source = await deriveSourceKeypair("a b c d e f g", { isTest: true })
+    const newsroom = await generateNewsroomKeypair()
+    await expect(boxDecrypt("dG9vc2hvcnQ=", newsroom.publicKey, source.privateKey)).rejects.toThrow()
   })
 })

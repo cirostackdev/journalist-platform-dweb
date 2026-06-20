@@ -7,8 +7,9 @@
     "./*": "./src/*.ts"
   },
   "dependencies": {
+    "argon2": "^0.31.2",
     "libsodium-wrappers": "^0.7.15",
-    "argon2": "^0.31.2"
+    "libsodium-wrappers-sumo": "^0.8.4"
   },
   "devDependencies": {
     "@types/libsodium-wrappers": "^0.7.14",
