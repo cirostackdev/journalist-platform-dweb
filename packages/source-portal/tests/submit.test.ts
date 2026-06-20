@@ -87,4 +87,20 @@ describe("POST /submit", () => {
       rmSync(submissionsDir, { recursive: true, force: true })
     }
   })
+
+  test("returns 200 with codename and submissionId when submitting with passphrase", async () => {
+    const { app } = await buildApp()
+    const server = app.listen(0)
+    const port = (server.address() as { port: number }).port
+    const r = await fetch(`http://localhost:${port}/submit`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text: "this is my tip", passphrase: "secret-phrase-123" }),
+    })
+    const body = await r.json()
+    server.close()
+    expect(r.status).toBe(200)
+    expect(body.codename).toMatch(/^[a-z]+-[a-z]+-[a-z]+$/)
+    expect(body.submissionId).toBeString()
+  })
 })

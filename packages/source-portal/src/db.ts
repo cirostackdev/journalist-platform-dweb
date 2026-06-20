@@ -5,6 +5,7 @@ const SCHEMA = `
   CREATE TABLE IF NOT EXISTS sources (
     id TEXT PRIMARY KEY,
     codename_hash TEXT NOT NULL UNIQUE,
+    passphrase_hash TEXT,
     created_at INTEGER NOT NULL
   );
 
@@ -44,10 +45,17 @@ export type Message = {
   created_at: number
 }
 
+export type Source = {
+  id: string
+  codename_hash: string
+  passphrase_hash: string | null
+  created_at: number
+}
+
 export interface Db {
   close(): void
   query(sql: string): { get(): unknown; all(...args: unknown[]): unknown[] }
-  insertSource(codenameHash: string): string
+  insertSource(codenameHash: string, passphraseHash?: string): string
   insertSubmission(sourceId: string, encryptedText: string | null): string
   insertMessage(
     submissionId: string,
@@ -72,11 +80,11 @@ export function openDb(path: string): Db {
     query(sql: string) {
       return sqlite.query(sql)
     },
-    insertSource(codenameHash: string): string {
+    insertSource(codenameHash: string, passphraseHash?: string): string {
       const id = randomUUID()
       sqlite
-        .query("INSERT INTO sources (id, codename_hash, created_at) VALUES (?, ?, ?)")
-        .run(id, codenameHash, Date.now())
+        .query("INSERT INTO sources (id, codename_hash, passphrase_hash, created_at) VALUES (?, ?, ?, ?)")
+        .run(id, codenameHash, passphraseHash ?? null, Date.now())
       return id
     },
     insertSubmission(sourceId: string, encryptedText: string | null): string {
@@ -103,10 +111,10 @@ export function openDb(path: string): Db {
         .query("SELECT * FROM messages WHERE submission_id = ? ORDER BY created_at ASC")
         .all(submissionId) as Message[]
     },
-    getSourceByHash(codenameHash: string): { id: string } | null {
+    getSourceByHash(codenameHash: string): Source | null {
       return sqlite
-        .query("SELECT id FROM sources WHERE codename_hash = ?")
-        .get(codenameHash) as { id: string } | null
+        .query("SELECT id, codename_hash, passphrase_hash, created_at FROM sources WHERE codename_hash = ?")
+        .get(codenameHash) as Source | null
     },
   }
 }

@@ -26,6 +26,7 @@ export function createSubmitRouter(opts: SubmitRouterOptions): Router {
 
   router.post("/", upload.array("files"), async (req, res) => {
     const text = req.body?.text as string | undefined
+    const passphrase = req.body?.passphrase as string | undefined
     const files = (req.files ?? []) as Express.Multer.File[]
 
     if (!text && files.length === 0) {
@@ -42,7 +43,17 @@ export function createSubmitRouter(opts: SubmitRouterOptions): Router {
         parallelism: 1,
       })
 
-      const sourceId = opts.db.insertSource(codenameHash)
+      let passphraseHash: string | undefined
+      if (passphrase?.trim()) {
+        passphraseHash = await argon2.hash(passphrase, {
+          type: argon2.argon2id,
+          memoryCost: 65536,
+          timeCost: 3,
+          parallelism: 1,
+        })
+      }
+
+      const sourceId = opts.db.insertSource(codenameHash, passphraseHash)
 
       let encryptedText: string | null = null
       if (text) {
