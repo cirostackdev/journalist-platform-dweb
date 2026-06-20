@@ -1,0 +1,23 @@
+[Unit]
+Description=Journalist Platform — Journalist Workspace
+After=network.target tor.service postgresql.service
+Requires=tor.service postgresql.service
+
+[Service]
+Type=simple
+User=journalist-platform
+Environment=DATABASE_URL=postgres://journalist-platform@localhost/journalist_workspace
+WorkingDirectory=/opt/journalist-platform/packages/journalist-workspace
+ExecStart=/usr/local/bin/bun run src/server.ts
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=yes
+ReadWritePaths=/var/secure /var/secure-queue /var/publication
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

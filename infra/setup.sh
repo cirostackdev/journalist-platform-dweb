@@ -8,7 +8,7 @@ fi
 
 echo "=== Installing dependencies ==="
 apt-get update -qq
-apt-get install -y tor clamav clamav-daemon unattended-upgrades ufw
+apt-get install -y tor clamav clamav-daemon unattended-upgrades ufw postgresql
 
 echo "=== Creating secure directories ==="
 mkdir -p /var/secure /var/secure-queue /var/secure-submissions
@@ -16,6 +16,12 @@ chmod 700 /var/secure /var/secure-queue /var/secure-submissions
 
 useradd -r -s /sbin/nologin -d /var/secure journalist-platform 2>/dev/null || true
 chown journalist-platform:journalist-platform /var/secure /var/secure-queue /var/secure-submissions
+
+echo "=== Setting up PostgreSQL ==="
+systemctl enable postgresql
+systemctl start postgresql
+sudo -u postgres createuser journalist-platform --no-superuser --no-createdb --no-createrole 2>/dev/null || true
+sudo -u postgres createdb journalist_workspace --owner=journalist-platform 2>/dev/null || true
 
 echo "=== Configuring Tor ==="
 cp "$(dirname "$0")/torrc.template" /etc/tor/torrc
