@@ -35,4 +35,15 @@ describe("publishArticle", () => {
     expect(html).toContain("<!DOCTYPE html>")
     expect(html).toContain("<html")
   })
+  test("publishArticle creates or updates index.html", async () => {
+    const { masterKey, encBody, encDek } = await makeEncryptedBody("# Article One")
+    await publishArticle({ articleId: "art-idx-001", encryptedBody: encBody, encryptedDek: encDek, masterKey, publicationDir: TEST_PUB_DIR })
+    expect(existsSync(`${TEST_PUB_DIR}/index.html`)).toBe(true)
+  })
+  test("index.html links to published articles", async () => {
+    const { masterKey, encBody, encDek } = await makeEncryptedBody("# Article Two")
+    await publishArticle({ articleId: "art-idx-002", encryptedBody: encBody, encryptedDek: encDek, masterKey, publicationDir: TEST_PUB_DIR })
+    const index = readFileSync(`${TEST_PUB_DIR}/index.html`, "utf8")
+    expect(index).toContain("art-idx-002.html")
+  })
 })
