@@ -1,0 +1,109 @@
+<h2>Workspace Video Library</h2>
+<p class="subtitle">How should the video management area in the journalist workspace be structured?</p>
+
+<div class="cards">
+
+  <div class="card" data-choice="a" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="background:#0f172a;padding:14px;border-radius:6px;font-family:system-ui;color:#e2e8f0;font-size:11px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+          <div style="font-size:13px;font-weight:700">Videos</div>
+          <div style="background:#10b981;color:#000;border-radius:4px;padding:4px 10px;font-size:10px;font-weight:700;cursor:pointer">+ Upload</div>
+        </div>
+        <!-- Tabs -->
+        <div style="display:flex;gap:1px;margin-bottom:12px;border-bottom:1px solid #1e2a45">
+          <div style="padding:5px 10px;font-size:10px;color:#10b981;border-bottom:1.5px solid #10b981">All (7)</div>
+          <div style="padding:5px 10px;font-size:10px;color:#64748b">From sources (4)</div>
+          <div style="padding:5px 10px;font-size:10px;color:#64748b">My uploads (3)</div>
+          <div style="padding:5px 10px;font-size:10px;color:#64748b">Published (2)</div>
+        </div>
+        <!-- Video rows -->
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <div style="display:flex;align-items:center;gap:10px;padding:8px;background:#0d1524;border-radius:5px;border:1px solid #1e2a45">
+            <div style="width:56px;height:32px;background:#1e2a45;border-radius:3px;flex-shrink:0;display:flex;align-items:center;justify-content:center">
+              <div style="width:0;height:0;border-top:5px solid transparent;border-bottom:5px solid transparent;border-left:8px solid #10b981;margin-left:2px"></div>
+            </div>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:10px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Leaked boardroom footage — Q3 planning</div>
+              <div style="font-size:9px;color:#64748b">From: Ghost · 14:32 · 18 Jun</div>
+            </div>
+            <div style="font-size:9px;color:#f59e0b;background:#451a03;border-radius:3px;padding:2px 6px;flex-shrink:0">draft</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;padding:8px;background:#0d1524;border-radius:5px;border:1px solid #1e2a45">
+            <div style="width:56px;height:32px;background:#1e2a45;border-radius:3px;flex-shrink:0;display:flex;align-items:center;justify-content:center">
+              <div style="width:0;height:0;border-top:5px solid transparent;border-bottom:5px solid transparent;border-left:8px solid #10b981;margin-left:2px"></div>
+            </div>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:10px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">My interview — whistleblower testimony</div>
+              <div style="font-size:9px;color:#64748b">My upload · 8:17 · 19 Jun</div>
+            </div>
+            <div style="font-size:9px;color:#10b981;background:#0a1a0f;border-radius:3px;padding:2px 6px;flex-shrink:0">published</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;padding:8px;background:#0d1524;border-radius:5px;border:1px solid #1e2a45">
+            <div style="width:56px;height:32px;background:#1e2a45;border-radius:3px;flex-shrink:0;display:flex;align-items:center;justify-content:center">
+              <div style="width:0;height:0;border-top:5px solid transparent;border-bottom:5px solid transparent;border-left:8px solid #10b981;margin-left:2px"></div>
+            </div>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:10px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Security camera clip — entrance lobby</div>
+              <div style="font-size:9px;color:#64748b">From: Phantom · 0:47 · 20 Jun</div>
+            </div>
+            <div style="font-size:9px;color:#6366f1;background:#1e1b4b;border-radius:3px;padding:2px 6px;flex-shrink:0">processing</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A — Unified video library</h3>
+      <p>One page, tabbed by source. All videos (submitted + journalist-uploaded) in a single filterable list. Upload button always visible. Clean and simple.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="b" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="background:#0f172a;padding:14px;border-radius:6px;font-family:system-ui;color:#e2e8f0;font-size:11px">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <!-- Left: source videos -->
+          <div style="background:#0d1524;border-radius:5px;padding:10px;border:1px solid #1e2a45">
+            <div style="font-size:10px;font-weight:700;margin-bottom:8px;color:#94a3b8;text-transform:uppercase;letter-spacing:.08em">Source Submissions</div>
+            <div style="display:flex;flex-direction:column;gap:5px">
+              <div style="padding:6px;background:#060b14;border-radius:4px">
+                <div style="font-size:9px;font-weight:600;margin-bottom:2px">Boardroom footage</div>
+                <div style="font-size:9px;color:#64748b">Ghost · 14:32</div>
+              </div>
+              <div style="padding:6px;background:#060b14;border-radius:4px">
+                <div style="font-size:9px;font-weight:600;margin-bottom:2px">Lobby camera clip</div>
+                <div style="font-size:9px;color:#64748b">Phantom · 0:47</div>
+              </div>
+              <div style="padding:6px;background:#060b14;border-radius:4px;border:1px dashed #1e2a45;color:#64748b;text-align:center;font-size:9px">+ 2 more</div>
+            </div>
+          </div>
+          <!-- Right: journalist uploads -->
+          <div style="background:#0d1524;border-radius:5px;padding:10px;border:1px solid #1e2a45">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+              <div style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.08em">My Videos</div>
+              <div style="background:#10b981;color:#000;border-radius:3px;padding:2px 7px;font-size:9px;font-weight:700">+ Upload</div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:5px">
+              <div style="padding:6px;background:#060b14;border-radius:4px">
+                <div style="font-size:9px;font-weight:600;margin-bottom:2px">Interview testimony</div>
+                <div style="font-size:9px;color:#10b981">● published</div>
+              </div>
+              <div style="padding:6px;background:#060b14;border-radius:4px">
+                <div style="font-size:9px;font-weight:600;margin-bottom:2px">B-roll — building exterior</div>
+                <div style="font-size:9px;color:#f59e0b">draft</div>
+              </div>
+              <div style="border:1.5px dashed #1e2a45;border-radius:4px;padding:12px 6px;text-align:center;color:#64748b;font-size:9px">Drop video here</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B — Split panels</h3>
+      <p>Two side-by-side panels: source submissions left, journalist uploads right. Drop zone always visible. Clear ownership boundary.</p>
+    </div>
+  </div>
+
+</div>
+
+<p class="subtitle" style="margin-top:16px">Click a layout or tell me in the terminal.</p>

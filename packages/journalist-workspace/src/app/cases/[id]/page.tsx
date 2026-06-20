@@ -110,6 +110,7 @@ export default function CasePage({ params }: { params: { id: string } }) {
   const [assignUserId, setAssignUserId] = useState("")
   const [assignLoading, setAssignLoading] = useState(false)
   const [assignMsg, setAssignMsg] = useState<string | null>(null)
+  const [journalists, setJournalists] = useState<{ id: string; username: string }[]>([])
 
   // Video watch modal
   const [watchUrl, setWatchUrl] = useState<string | null>(null)
@@ -141,7 +142,16 @@ export default function CasePage({ params }: { params: { id: string } }) {
       router.replace("/login")
       return
     }
-    setRole(sessionStorage.getItem("role"))
+    const userRole = sessionStorage.getItem("role")
+    setRole(userRole)
+    if (userRole === "admin") {
+      fetch("/api/admin/users")
+        .then((r) => r.json())
+        .then((users: { id: string; username: string; role: string }[]) => {
+          setJournalists(users.filter((u) => u.role === "journalist" || u.role === "editor"))
+        })
+        .catch(() => {})
+    }
     loadCase()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id])
@@ -501,16 +511,19 @@ export default function CasePage({ params }: { params: { id: string } }) {
               <section className="space-y-3">
                 <h2 className="text-sm font-semibold text-white">Assign Case</h2>
                 <div className="flex items-center gap-3 flex-wrap">
-                  <input
-                    type="text"
+                  <select
                     value={assignUserId}
                     onChange={(e) => setAssignUserId(e.target.value)}
-                    placeholder="User ID"
-                    className="bg-gray-700 border border-gray-600 text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-indigo-500 placeholder-gray-500"
-                  />
+                    className="bg-gray-700 border border-gray-600 text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-indigo-500"
+                  >
+                    <option value="">— Select journalist —</option>
+                    {journalists.map((j) => (
+                      <option key={j.id} value={j.id}>{j.username}</option>
+                    ))}
+                  </select>
                   <button
                     onClick={handleAssign}
-                    disabled={assignLoading || !assignUserId.trim()}
+                    disabled={assignLoading || !assignUserId}
                     className="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors"
                   >
                     {assignLoading && (

@@ -1,0 +1,74 @@
+<h2>Publication Site — Video Report Page</h2>
+<p class="subtitle">This is what Tor visitors see when they open a published video report. Layout B was chosen (hero player first). Does this look right?</p>
+
+<div class="mockup">
+  <div class="mockup-header">publication/videos/[id]/index.html — dark editorial theme</div>
+  <div class="mockup-body" style="background:#060B14;font-family:system-ui;color:#F1F5F9;padding:0;overflow:hidden;border-radius:4px">
+
+    <!-- Site header -->
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 24px;border-bottom:1px solid #1E2A45">
+      <div style="display:flex;align-items:center;gap:8px">
+        <div style="width:8px;height:8px;border-radius:50%;background:#10B981;box-shadow:0 0 8px #10B98180"></div>
+        <span style="font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#10B981">THE NEWSROOM</span>
+      </div>
+      <div style="display:flex;gap:16px">
+        <a href="#" style="font-size:11px;color:#64748B;text-decoration:none">Reports</a>
+        <a href="#" style="font-size:11px;color:#64748B;text-decoration:none">Videos</a>
+      </div>
+    </div>
+
+    <!-- Hero video player -->
+    <div style="background:#000;aspect-ratio:16/9;position:relative;display:flex;align-items:center;justify-content:center;max-height:260px;overflow:hidden">
+      <div style="position:absolute;inset:0;background:linear-gradient(to bottom,transparent 60%,#060B14 100%)"></div>
+      <!-- Faux video frame -->
+      <div style="width:100%;height:100%;background:#0D1524;display:flex;align-items:center;justify-content:center">
+        <div style="text-align:center">
+          <div style="width:52px;height:52px;border-radius:50%;background:#10B98118;border:2px solid #10B981;display:flex;align-items:center;justify-content:center;margin:0 auto 8px">
+            <div style="width:0;height:0;border-top:10px solid transparent;border-bottom:10px solid transparent;border-left:18px solid #10B981;margin-left:4px"></div>
+          </div>
+          <div style="font-size:10px;color:#64748B">14:32 · 3 quality levels</div>
+        </div>
+      </div>
+      <!-- Overlay title at bottom of hero -->
+      <div style="position:absolute;bottom:0;left:0;right:0;padding:16px 24px">
+        <div style="font-size:9px;font-weight:700;color:#10B981;letter-spacing:.12em;text-transform:uppercase;margin-bottom:6px">VIDEO REPORT · Investigation · 20 Jun 2026</div>
+        <div style="font-size:18px;font-weight:800;line-height:1.2;letter-spacing:-.01em;text-shadow:0 2px 8px rgba(0,0,0,.8)">Secret meetings between officials and contractors revealed in leaked footage</div>
+      </div>
+    </div>
+
+    <!-- HLS quality selector -->
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 24px;background:#0D1524;border-bottom:1px solid #1E2A45">
+      <div style="display:flex;align-items:center;gap:6px">
+        <div style="width:6px;height:6px;border-radius:50%;background:#10B981"></div>
+        <span style="font-size:10px;color:#10B981;font-weight:600">Verified source footage</span>
+        <span style="font-size:10px;color:#1E2A45">·</span>
+        <span style="font-size:10px;color:#64748B">Metadata stripped</span>
+      </div>
+      <div style="display:flex;gap:6px">
+        <div style="font-size:10px;color:#64748B;padding:3px 8px;border:1px solid #1E2A45;border-radius:3px">Auto</div>
+        <div style="font-size:10px;color:#94A3B8;padding:3px 8px;border:1px solid #1E2A45;border-radius:3px">1080p</div>
+        <div style="font-size:10px;color:#94A3B8;padding:3px 8px;border:1px solid #1E2A45;border-radius:3px">720p</div>
+        <div style="font-size:10px;color:#94A3B8;padding:3px 8px;border:1px solid #1E2A45;border-radius:3px">480p</div>
+      </div>
+    </div>
+
+    <!-- Description -->
+    <div style="padding:24px 24px 20px;max-width:680px">
+      <p style="font-family:Georgia,serif;font-size:15px;line-height:1.8;color:#CBD5E1;border-left:3px solid #10B981;padding-left:16px;margin-bottom:16px">
+        The footage, submitted by a verified source with direct access to the proceedings, documents a series of undisclosed meetings between senior officials and private contractors over a three-month period.
+      </p>
+      <p style="font-family:Georgia,serif;font-size:14px;line-height:1.7;color:#94A3B8">
+        The newsroom has independently verified the authenticity of the recording and confirmed the identities of those present. All embedded metadata was removed prior to publication to protect the source.
+      </p>
+    </div>
+
+    <!-- Footer -->
+    <div style="padding:14px 24px;border-top:1px solid #1E2A45;display:flex;justify-content:space-between;align-items:center">
+      <a href="/video-index.html" style="font-size:11px;color:#10B981;text-decoration:none">← All videos</a>
+      <span style="font-size:10px;color:#64748B">This site is only accessible over Tor.</span>
+    </div>
+
+  </div>
+</div>
+
+<p class="subtitle" style="margin-top:16px">Does this look right, or any changes? Let me know in the terminal.</p>

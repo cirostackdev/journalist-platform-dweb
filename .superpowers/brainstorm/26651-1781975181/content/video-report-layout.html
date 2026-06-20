@@ -1,0 +1,85 @@
+<h2>Video Report Page Layout</h2>
+<p class="subtitle">How should standalone video reports appear on the publication site? The site uses the existing dark editorial theme.</p>
+
+<div class="cards">
+
+  <div class="card" data-choice="a" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="background:#060B14;padding:16px;border-radius:6px;font-family:system-ui;color:#F1F5F9">
+        <div style="font-size:9px;color:#10B981;letter-spacing:.12em;text-transform:uppercase;margin-bottom:8px">● INVESTIGATION · 20 Jun 2026</div>
+        <div style="font-size:15px;font-weight:700;margin-bottom:12px;line-height:1.3">Secret meetings between officials and contractors revealed in leaked footage</div>
+        <div style="background:#0D1524;border-radius:6px;aspect-ratio:16/9;display:flex;align-items:center;justify-content:center;margin-bottom:10px;border:1px solid #1E2A45">
+          <div style="width:36px;height:36px;border-radius:50%;background:#10B98122;border:1.5px solid #10B981;display:flex;align-items:center;justify-content:center">
+            <div style="width:0;height:0;border-top:7px solid transparent;border-bottom:7px solid transparent;border-left:12px solid #10B981;margin-left:3px"></div>
+          </div>
+        </div>
+        <div style="font-size:11px;color:#64748B;margin-bottom:8px">14:32 · Verified footage · Metadata stripped</div>
+        <div style="font-size:11px;color:#94A3B8;line-height:1.6">The footage, submitted by a source with direct access to the proceedings, shows a series of undisclosed meetings over a three-month period…</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A — Centered editorial</h3>
+      <p>Title above player, description below. Max-width column, same as article pages. Consistent with existing publication style.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="b" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="background:#060B14;padding:16px;border-radius:6px;font-family:system-ui;color:#F1F5F9">
+        <div style="background:#0D1524;border-radius:6px;aspect-ratio:16/9;display:flex;align-items:center;justify-content:center;margin-bottom:12px;border:1px solid #1E2A45;position:relative">
+          <div style="position:absolute;bottom:8px;left:10px;right:10px">
+            <div style="background:rgba(6,11,20,0.85);border-radius:4px;padding:6px 8px">
+              <div style="font-size:10px;font-weight:700;line-height:1.3;margin-bottom:3px">Secret meetings between officials and contractors revealed</div>
+              <div style="display:flex;align-items:center;gap:8px">
+                <div style="height:2px;flex:1;background:#1E2A45;border-radius:1px"><div style="width:35%;height:100%;background:#10B981;border-radius:1px"></div></div>
+                <div style="font-size:9px;color:#64748B">5:02 / 14:32</div>
+              </div>
+            </div>
+          </div>
+          <div style="width:36px;height:36px;border-radius:50%;background:#10B98122;border:1.5px solid #10B981;display:flex;align-items:center;justify-content:center">
+            <div style="width:0;height:0;border-top:7px solid transparent;border-bottom:7px solid transparent;border-left:12px solid #10B981;margin-left:3px"></div>
+          </div>
+        </div>
+        <div style="font-size:9px;color:#10B981;letter-spacing:.12em;text-transform:uppercase;margin-bottom:6px">INVESTIGATION · 20 Jun 2026</div>
+        <div style="font-size:14px;font-weight:700;margin-bottom:6px;line-height:1.3">Secret meetings revealed in leaked footage</div>
+        <div style="font-size:11px;color:#94A3B8;line-height:1.6">The footage shows a series of undisclosed meetings over a three-month period…</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B — Hero player first</h3>
+      <p>Full-width player at top with overlay title, then editorial text below. Immersive — video dominates the page. Title & scrubber overlaid on player.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="c" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="background:#060B14;padding:16px;border-radius:6px;font-family:system-ui;color:#F1F5F9">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div style="background:#0D1524;border-radius:6px;aspect-ratio:16/9;display:flex;align-items:center;justify-content:center;border:1px solid #1E2A45;grid-column:1/3">
+            <div style="width:32px;height:32px;border-radius:50%;background:#10B98122;border:1.5px solid #10B981;display:flex;align-items:center;justify-content:center">
+              <div style="width:0;height:0;border-top:6px solid transparent;border-bottom:6px solid transparent;border-left:10px solid #10B981;margin-left:2px"></div>
+            </div>
+          </div>
+          <div>
+            <div style="font-size:9px;color:#10B981;letter-spacing:.1em;text-transform:uppercase;margin-bottom:4px">Investigation</div>
+            <div style="font-size:11px;font-weight:700;margin-bottom:6px;line-height:1.3">Secret meetings between officials and contractors revealed in leaked footage</div>
+            <div style="font-size:10px;color:#94A3B8;line-height:1.5">The footage, submitted by a source with direct access, shows undisclosed meetings…</div>
+          </div>
+          <div style="background:#0D1524;border-radius:6px;padding:8px;border:1px solid #1E2A45">
+            <div style="font-size:9px;color:#64748B;margin-bottom:4px">DETAILS</div>
+            <div style="font-size:10px;color:#94A3B8;margin-bottom:3px">Duration: 14:32</div>
+            <div style="font-size:10px;color:#94A3B8;margin-bottom:3px">Published: 20 Jun 2026</div>
+            <div style="font-size:10px;color:#10B981">● Verified</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>C — Player + sidebar</h3>
+      <p>Player spans full width, then two-column below: description left, metadata panel right. More structured, dashboard-like.</p>
+    </div>
+  </div>
+
+</div>
+
+<p class="subtitle" style="margin-top:16px">Click a layout to select it, or let me know in the terminal.</p>
