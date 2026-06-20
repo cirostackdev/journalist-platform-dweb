@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Secure Newsroom — Check In</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<div class="page">
+
+  <header class="site-header">
+    <a href="/" class="logo">
+      <div class="logo-dot"></div>
+      <span class="logo-text">Secure Newsroom</span>
+    </a>
+    <a href="/" class="nav-link">Submit a Tip</a>
+  </header>
+
+  <!-- Check-in form -->
+  <form class="card" id="checkin-form">
+    <div class="card-title">Check In</div>
+    <div class="card-subtitle">Enter both credentials to read replies from the newsroom.</div>
+
+    <div class="field">
+      <label class="field-label" for="codename-input">Codename</label>
+      <input type="text" id="codename-input" name="codename" placeholder="word · word · word" autocomplete="off" spellcheck="false">
+    </div>
+
+    <div class="field">
+      <label class="field-label" for="passphrase-input">Passphrase</label>
+      <input type="text" id="passphrase-input" name="passphrase" placeholder="XXXX-XXXX-XXXX" autocomplete="off" spellcheck="false" style="font-family:monospace;letter-spacing:.05em;">
+    </div>
+
+    <div id="checkin-error" class="error-msg"></div>
+    <button type="submit" class="btn-submit" id="checkin-btn">Check In →</button>
+  </form>
+
+  <div class="security-notice">
+    <span style="color:var(--green);font-size:14px;flex-shrink:0;margin-top:1px;">🔒</span>
+    <p class="security-notice-text">Your credentials are never stored in this browser. This connection is encrypted over Tor.</p>
+  </div>
+
+  <!-- Replies view (hidden until check-in succeeds) -->
+  <div id="checkin-result" style="display:none;">
+    <div class="inbox-header">
+      <div class="card-title" style="margin-bottom:0">Your Inbox</div>
+      <span class="badge" id="reply-count"></span>
+    </div>
+    <div id="replies-container"></div>
+    <button class="btn-outline" id="checkin-again-btn" style="margin-top:16px;width:100%;text-align:center;">Check Again</button>
+  </div>
+
+</div>
+<script src="/portal.js"></script>
+</body>
+</html>
