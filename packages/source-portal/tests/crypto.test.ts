@@ -53,6 +53,10 @@ describe("DEK lifecycle", () => {
     const encrypted = await encryptDEK(dek, masterKey)
     await expect(decryptDEK(encrypted, wrongKey)).rejects.toThrow()
   })
+
+  test("decryptDEK throws on truncated ciphertext", async () => {
+    await expect(decryptDEK("dG9vc2hvcnQ=", Buffer.alloc(32))).rejects.toThrow("too short")
+  })
 })
 
 describe("encryptData / decryptData", () => {
@@ -77,5 +81,9 @@ describe("encryptData / decryptData", () => {
     const a = await encryptData("same input", dek)
     const b = await encryptData("same input", dek)
     expect(a).not.toBe(b)
+  })
+
+  test("decryptData throws on truncated ciphertext", async () => {
+    await expect(decryptData("dG9vc2hvcnQ=", new Uint8Array(32))).rejects.toThrow("too short")
   })
 })

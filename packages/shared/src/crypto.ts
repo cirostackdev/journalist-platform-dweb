@@ -7,6 +7,11 @@ export async function deriveMasterKey(
   passphrase: string,
   salt: Buffer
 ): Promise<Buffer> {
+  if (salt.length < 8) {
+    throw new Error("Salt must be at least 8 bytes")
+  }
+  // 64 MB / 3 iterations — sufficient for login-style auth.
+  // Increase memoryCost to 262144+ for higher-threat deployments (e.g. nation-state adversaries).
   return argon2.hash(passphrase, {
     type: argon2.argon2id,
     salt,
@@ -39,6 +44,9 @@ export async function decryptDEK(
 ): Promise<Uint8Array> {
   await sodium.ready
   const buf = Buffer.from(encryptedDEK, "base64")
+  if (buf.length <= sodium.crypto_secretbox_NONCEBYTES) {
+    throw new Error("Ciphertext too short — data may be corrupted or truncated")
+  }
   const nonce = buf.subarray(0, sodium.crypto_secretbox_NONCEBYTES)
   const ciphertext = buf.subarray(sodium.crypto_secretbox_NONCEBYTES)
   const dek = sodium.crypto_secretbox_open_easy(ciphertext, nonce, masterKey)
@@ -63,6 +71,9 @@ export async function decryptData(
 ): Promise<Buffer> {
   await sodium.ready
   const buf = Buffer.from(ciphertext, "base64")
+  if (buf.length <= sodium.crypto_secretbox_NONCEBYTES) {
+    throw new Error("Ciphertext too short — data may be corrupted or truncated")
+  }
   const nonce = buf.subarray(0, sodium.crypto_secretbox_NONCEBYTES)
   const encrypted = buf.subarray(sodium.crypto_secretbox_NONCEBYTES)
   const decrypted = sodium.crypto_secretbox_open_easy(encrypted, nonce, dek)
