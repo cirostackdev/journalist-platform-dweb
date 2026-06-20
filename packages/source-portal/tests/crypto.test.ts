@@ -1,4 +1,7 @@
 import { describe, test, expect } from "bun:test"
+import { mkdtempSync, writeFileSync, rmSync } from "fs"
+import { tmpdir } from "os"
+import { PassThrough } from "stream"
 import {
   deriveMasterKey,
   generateDEK,
@@ -13,6 +16,9 @@ import {
   sealedBoxDecrypt,
   boxEncrypt,
   boxDecrypt,
+  encryptStreamToFile,
+  decryptStreamToWritable,
+  isSecretStream,
 } from "@journalist/shared/crypto"
 
 describe("deriveMasterKey", () => {
@@ -207,5 +213,102 @@ describe("boxEncrypt / boxDecrypt", () => {
     const source = await deriveSourceKeypair("a b c d e f g", { isTest: true })
     const newsroom = await generateNewsroomKeypair()
     await expect(boxDecrypt("dG9vc2hvcnQ=", newsroom.publicKey, source.privateKey)).rejects.toThrow()
+  })
+})
+
+describe("isSecretStream", () => {
+  test("returns true for secretstream-encrypted files", async () => {
+    const dir = mkdtempSync(`${tmpdir()}/stream-test-`)
+    try {
+      const { publicKey } = await generateNewsroomKeypair()
+      const key = publicKey.slice(0, 32)
+      const src = `${dir}/plain.bin`
+      const enc = `${dir}/enc.bin`
+      writeFileSync(src, Buffer.from("hello world"))
+      await encryptStreamToFile(src, enc, key)
+      expect(isSecretStream(enc)).toBe(true)
+    } finally { rmSync(dir, { recursive: true, force: true }) }
+  })
+
+  test("returns false for non-secretstream files", () => {
+    const dir = mkdtempSync(`${tmpdir()}/stream-test-`)
+    try {
+      const f = `${dir}/plain.bin`
+      writeFileSync(f, Buffer.from("just some bytes not encrypted"))
+      expect(isSecretStream(f)).toBe(false)
+    } finally { rmSync(dir, { recursive: true, force: true }) }
+  })
+})
+
+describe("encryptStreamToFile / decryptStreamToWritable", () => {
+  test("round-trips a small file", async () => {
+    const dir = mkdtempSync(`${tmpdir()}/stream-test-`)
+    try {
+      const { publicKey } = await generateNewsroomKeypair()
+      const key = publicKey.slice(0, 32)
+      const src = `${dir}/plain.txt`
+      const enc = `${dir}/enc.bin`
+      const plaintext = Buffer.from("round trip test data")
+      writeFileSync(src, plaintext)
+      await encryptStreamToFile(src, enc, key)
+
+      const out = new PassThrough()
+      const chunks: Buffer[] = []
+      out.on("data", (c: Buffer) => chunks.push(c))
+      await decryptStreamToWritable(enc, out, key)
+      expect(Buffer.concat(chunks).equals(plaintext)).toBe(true)
+    } finally { rmSync(dir, { recursive: true, force: true }) }
+  })
+
+  test("round-trips a multi-chunk file (>4 MB)", async () => {
+    const dir = mkdtempSync(`${tmpdir()}/stream-test-`)
+    try {
+      const { publicKey } = await generateNewsroomKeypair()
+      const key = publicKey.slice(0, 32)
+      const src = `${dir}/big.bin`
+      const enc = `${dir}/big.enc`
+      const bigData = Buffer.alloc(5 * 1024 * 1024, 0xab) // 5 MB
+      writeFileSync(src, bigData)
+      await encryptStreamToFile(src, enc, key)
+
+      const out = new PassThrough()
+      const chunks: Buffer[] = []
+      out.on("data", (c: Buffer) => chunks.push(c))
+      await decryptStreamToWritable(enc, out, key)
+      const result = Buffer.concat(chunks)
+      expect(result.length).toBe(bigData.length)
+      expect(result.equals(bigData)).toBe(true)
+    } finally { rmSync(dir, { recursive: true, force: true }) }
+  })
+
+  test("decryption fails with wrong key", async () => {
+    const dir = mkdtempSync(`${tmpdir()}/stream-test-`)
+    try {
+      const { publicKey: key1 } = await generateNewsroomKeypair()
+      const { publicKey: key2 } = await generateNewsroomKeypair()
+      const src = `${dir}/plain.bin`
+      const enc = `${dir}/enc.bin`
+      writeFileSync(src, Buffer.from("secret data"))
+      await encryptStreamToFile(src, enc, key1.slice(0, 32))
+
+      const out = new PassThrough()
+      await expect(
+        decryptStreamToWritable(enc, out, key2.slice(0, 32))
+      ).rejects.toThrow()
+    } finally { rmSync(dir, { recursive: true, force: true }) }
+  })
+
+  test("decryption throws on non-secretstream file", async () => {
+    const dir = mkdtempSync(`${tmpdir()}/stream-test-`)
+    try {
+      const { publicKey } = await generateNewsroomKeypair()
+      const key = publicKey.slice(0, 32)
+      const f = `${dir}/plain.bin`
+      writeFileSync(f, Buffer.from("not encrypted at all"))
+      const out = new PassThrough()
+      await expect(
+        decryptStreamToWritable(f, out, key)
+      ).rejects.toThrow("not a secretstream file")
+    } finally { rmSync(dir, { recursive: true, force: true }) }
   })
 })

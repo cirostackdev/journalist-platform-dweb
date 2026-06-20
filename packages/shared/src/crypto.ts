@@ -1,5 +1,8 @@
 import { createRequire } from "module"
 import { randomBytes } from "crypto"
+import { openSync, readSync, closeSync } from "fs"
+import { createReadStream, createWriteStream } from "fs"
+import type { Writable } from "stream"
 const _require = createRequire(import.meta.url)
 const sodium = _require("libsodium-wrappers") as typeof import("libsodium-wrappers")
 const sodiumSumo = _require("libsodium-wrappers-sumo") as typeof import("libsodium-wrappers-sumo")
@@ -190,4 +193,159 @@ export async function boxDecrypt(
   const plain = sodium.crypto_box_open_easy(data, nonce, senderPublicKey, recipientPrivateKey)
   if (!plain) throw new Error("boxDecrypt: decryption failed — wrong key or corrupted data")
   return Buffer.from(plain)
+}
+
+// ── Secretstream (large file streaming encryption) ────────────────────────────
+
+const SECRET_STREAM_MAGIC = Buffer.from([0x00, 0x53, 0x45, 0x43]) // "\x00SEC"
+const CHUNK_SIZE = 4 * 1024 * 1024 // 4 MB plaintext chunks
+
+/**
+ * Returns true if the file at `filePath` was encrypted with encryptStreamToFile.
+ * Reads only the first 4 bytes (the magic header).
+ */
+export function isSecretStream(filePath: string): boolean {
+  try {
+    const fd = openSync(filePath, "r")
+    const buf = Buffer.alloc(4)
+    readSync(fd, buf, 0, 4, 0)
+    closeSync(fd)
+    return buf.equals(SECRET_STREAM_MAGIC)
+  } catch {
+    return false
+  }
+}
+
+/**
+ * Stream-encrypt a file using libsodium crypto_secretstream_xchacha20poly1305.
+ * Output format: [4-byte magic][24-byte header][4-byte len][chunk]...
+ * Each plaintext chunk is CHUNK_SIZE bytes (last chunk may be smaller).
+ */
+export async function encryptStreamToFile(
+  sourcePath: string,
+  destPath: string,
+  key: Uint8Array
+): Promise<void> {
+  await sodiumSumo.ready
+  const { state, header } = sodiumSumo.crypto_secretstream_xchacha20poly1305_init_push(key)
+  const out = createWriteStream(destPath)
+
+  await new Promise<void>((resolve, reject) => {
+    out.on("error", reject)
+
+    // Write magic + header first
+    out.write(SECRET_STREAM_MAGIC)
+    out.write(Buffer.from(header))
+
+    const inStream = createReadStream(sourcePath, { highWaterMark: CHUNK_SIZE })
+    const chunks: Buffer[] = []
+
+    inStream.on("error", reject)
+    inStream.on("data", (chunk: Buffer) => { chunks.push(chunk) })
+    inStream.on("end", () => {
+      try {
+        // Handle empty file
+        if (chunks.length === 0) {
+          const ct = sodiumSumo.crypto_secretstream_xchacha20poly1305_push(
+            state, Buffer.alloc(0), null,
+            sodiumSumo.crypto_secretstream_xchacha20poly1305_TAG_FINAL
+          )
+          const lenBuf = Buffer.alloc(4)
+          lenBuf.writeUInt32BE(ct.length, 0)
+          out.write(lenBuf)
+          out.write(Buffer.from(ct))
+          out.end()
+          return
+        }
+        for (let i = 0; i < chunks.length; i++) {
+          const isLast = i === chunks.length - 1
+          const tag = isLast
+            ? sodiumSumo.crypto_secretstream_xchacha20poly1305_TAG_FINAL
+            : sodiumSumo.crypto_secretstream_xchacha20poly1305_TAG_MESSAGE
+          const ct = sodiumSumo.crypto_secretstream_xchacha20poly1305_push(
+            state, chunks[i], null, tag
+          )
+          const lenBuf = Buffer.alloc(4)
+          lenBuf.writeUInt32BE(ct.length, 0)
+          out.write(lenBuf)
+          out.write(Buffer.from(ct))
+        }
+        out.end()
+      } catch (err) { reject(err) }
+    })
+    out.on("finish", resolve)
+  })
+}
+
+/**
+ * Stream-decrypt a file created by encryptStreamToFile, writing plaintext to `dest`.
+ * Throws if the magic header is missing or any chunk fails authentication.
+ */
+export async function decryptStreamToWritable(
+  sourcePath: string,
+  dest: Writable,
+  key: Uint8Array
+): Promise<void> {
+  await sodiumSumo.ready
+
+  const fd = openSync(sourcePath, "r")
+  try {
+    // Read and verify magic (4 bytes)
+    const magic = Buffer.alloc(4)
+    readSync(fd, magic, 0, 4, 0)
+    if (!magic.equals(SECRET_STREAM_MAGIC)) {
+      throw new Error("decryptStreamToWritable: not a secretstream file")
+    }
+
+    // Read header (24 bytes)
+    const headerLen = sodiumSumo.crypto_secretstream_xchacha20poly1305_HEADERBYTES
+    const header = Buffer.alloc(headerLen)
+    readSync(fd, header, 0, headerLen, 4)
+    const state = sodiumSumo.crypto_secretstream_xchacha20poly1305_init_pull(header, key)
+
+    let offset = 4 + headerLen
+
+    await new Promise<void>((resolve, reject) => {
+      dest.on("error", reject)
+
+      function readNextChunk() {
+        try {
+          const lenBuf = Buffer.alloc(4)
+          const bytesRead = readSync(fd, lenBuf, 0, 4, offset)
+          if (bytesRead === 0) { dest.end(); resolve(); return }
+          offset += 4
+          const ctLen = lenBuf.readUInt32BE(0)
+
+          const ct = Buffer.alloc(ctLen)
+          readSync(fd, ct, 0, ctLen, offset)
+          offset += ctLen
+
+          const result = sodiumSumo.crypto_secretstream_xchacha20poly1305_pull(state, ct, null)
+          if (!result) throw new Error("decryptStreamToWritable: authentication failed")
+          const { message, tag } = result
+
+          const writeDone = () => {
+            if (tag === sodiumSumo.crypto_secretstream_xchacha20poly1305_TAG_FINAL) {
+              dest.end(); resolve()
+            } else {
+              readNextChunk()
+            }
+          }
+
+          if (message.length > 0) {
+            dest.write(Buffer.from(message), (err) => {
+              if (err) { reject(err); return }
+              writeDone()
+            })
+          } else {
+            writeDone()
+          }
+        } catch (err) { reject(err) }
+      }
+
+      readNextChunk()
+    })
+  } finally {
+    closeSync(fd)
+  }
 }
