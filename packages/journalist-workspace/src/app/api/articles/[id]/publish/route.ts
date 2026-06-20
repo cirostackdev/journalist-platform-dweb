@@ -4,7 +4,7 @@ import { publishArticle } from "@/lib/publish"
 
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
   const { db, sessionStore, masterKey, publicationDir } = getGlobals()
-  const session = sessionStore.getSession(req.headers.get("x-session") ?? "")
+  const session = sessionStore.getSession(req.cookies.get("session")?.value ?? "")
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   if (session.role === "journalist") return NextResponse.json({ error: "Forbidden — editors only" }, { status: 403 })
   const article = await db.getArticle(params.id)

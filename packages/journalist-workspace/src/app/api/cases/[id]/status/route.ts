@@ -4,7 +4,7 @@ import type { CaseStatus } from "@/lib/db"
 
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
   const { db, sessionStore } = getGlobals()
-  const token = req.headers.get("x-session") ?? ""
+  const token = req.cookies.get("session")?.value ?? ""
   const session = sessionStore.getSession(token)
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   if (session.role === "editor") return NextResponse.json({ error: "Forbidden" }, { status: 403 })

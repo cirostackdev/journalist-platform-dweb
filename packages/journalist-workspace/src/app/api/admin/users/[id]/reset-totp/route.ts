@@ -5,7 +5,7 @@ import { generateDEK, encryptDEK, encryptData } from "@journalist/shared/crypto"
 
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
   const { db, sessionStore, masterKey } = getGlobals()
-  const session = sessionStore.getSession(req.headers.get("x-session") ?? "")
+  const session = sessionStore.getSession(req.cookies.get("session")?.value ?? "")
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   if (session.role !== "admin") return NextResponse.json({ error: "Forbidden" }, { status: 403 })
 

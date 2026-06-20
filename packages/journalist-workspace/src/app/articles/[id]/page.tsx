@@ -51,17 +51,9 @@ export default function ArticleEditorPage({ params }: { params: { id: string } }
   const [publishLoading, setPublishLoading] = useState(false)
   const [publishMsg, setPublishMsg] = useState<string | null>(null)
 
-  function getToken() {
-    return sessionStorage.getItem("session") ?? ""
-  }
-
   async function loadArticle() {
-    const token = getToken()
-    if (!token) return
     try {
-      const res = await fetch(`/api/articles/${id}`, {
-        headers: { "x-session": token },
-      })
+      const res = await fetch(`/api/articles/${id}`)
       const data = await res.json()
       if (data.error) {
         setLoadError(data.error)
@@ -78,8 +70,7 @@ export default function ArticleEditorPage({ params }: { params: { id: string } }
   }
 
   useEffect(() => {
-    const token = sessionStorage.getItem("session")
-    if (!token) {
+    if (!sessionStorage.getItem("role")) {
       router.replace("/login")
       return
     }
@@ -95,10 +86,7 @@ export default function ArticleEditorPage({ params }: { params: { id: string } }
     try {
       const res = await fetch(`/api/articles/${id}`, {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          "x-session": getToken(),
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ body }),
       })
       const data = await res.json()
@@ -121,7 +109,6 @@ export default function ArticleEditorPage({ params }: { params: { id: string } }
     try {
       const res = await fetch(`/api/articles/${id}/review`, {
         method: "PATCH",
-        headers: { "x-session": getToken() },
       })
       const data = await res.json()
       if (data.error) {
@@ -143,7 +130,6 @@ export default function ArticleEditorPage({ params }: { params: { id: string } }
     try {
       const res = await fetch(`/api/articles/${id}/publish`, {
         method: "POST",
-        headers: { "x-session": getToken() },
       })
       const data = await res.json()
       if (data.error) {

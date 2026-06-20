@@ -43,7 +43,14 @@ export async function POST(req: NextRequest) {
     await new Promise((r) => setTimeout(r, 500))
     return NextResponse.json({ error: "Invalid credentials" }, { status: 401 })
   }
-  // On success: clear the counter
+  // On success: clear the counter and set httpOnly session cookie
   failedAttempts.delete(username)
-  return NextResponse.json({ token: result.token, role: result.role })
+  const response = NextResponse.json({ ok: true, role: result.role })
+  response.cookies.set("session", result.token, {
+    httpOnly: true,
+    sameSite: "strict",
+    path: "/",
+    // secure: true — set in production behind TLS; omitted here so dev/test works without HTTPS
+  })
+  return response
 }

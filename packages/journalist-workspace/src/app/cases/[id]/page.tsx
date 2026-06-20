@@ -109,17 +109,9 @@ export default function CasePage({ params }: { params: { id: string } }) {
   const [assignLoading, setAssignLoading] = useState(false)
   const [assignMsg, setAssignMsg] = useState<string | null>(null)
 
-  function getToken() {
-    return sessionStorage.getItem("session") ?? ""
-  }
-
   async function loadCase() {
-    const token = getToken()
-    if (!token) return
     try {
-      const res = await fetch(`/api/cases/${id}`, {
-        headers: { "x-session": token },
-      })
+      const res = await fetch(`/api/cases/${id}`)
       const data = await res.json()
       if (data.error) {
         setLoadError(data.error)
@@ -128,7 +120,7 @@ export default function CasePage({ params }: { params: { id: string } }) {
         setNotes(data.notes ?? [])
         setSubmission(data.submission ?? null)
         setSelectedStatus(data.case?.status ?? "new")
-        const artRes = await fetch(`/api/cases/${id}/articles`, { headers: { "x-session": token } })
+        const artRes = await fetch(`/api/cases/${id}/articles`)
         const artData = await artRes.json()
         setArticles(artData.articles ?? [])
       }
@@ -140,8 +132,7 @@ export default function CasePage({ params }: { params: { id: string } }) {
   }
 
   useEffect(() => {
-    const token = sessionStorage.getItem("session")
-    if (!token) {
+    if (!sessionStorage.getItem("role")) {
       router.replace("/login")
       return
     }
@@ -158,10 +149,7 @@ export default function CasePage({ params }: { params: { id: string } }) {
     try {
       const res = await fetch(`/api/cases/${id}/notes`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-session": getToken(),
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text: noteText }),
       })
       const data = await res.json()
@@ -186,10 +174,7 @@ export default function CasePage({ params }: { params: { id: string } }) {
     try {
       const res = await fetch(`/api/cases/${id}/reply`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-session": getToken(),
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text: replyText }),
       })
       const data = await res.json()
@@ -212,10 +197,7 @@ export default function CasePage({ params }: { params: { id: string } }) {
     try {
       const res = await fetch(`/api/cases/${id}/status`, {
         method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          "x-session": getToken(),
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: selectedStatus }),
       })
       const data = await res.json()
@@ -239,10 +221,7 @@ export default function CasePage({ params }: { params: { id: string } }) {
     try {
       const res = await fetch(`/api/cases/${id}/assign`, {
         method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          "x-session": getToken(),
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userId: assignUserId }),
       })
       const data = await res.json()
@@ -264,7 +243,6 @@ export default function CasePage({ params }: { params: { id: string } }) {
     try {
       const res = await fetch(`/api/cases/${id}/articles`, {
         method: "POST",
-        headers: { "x-session": getToken() },
       })
       const data = await res.json()
       if (data.articleId) {

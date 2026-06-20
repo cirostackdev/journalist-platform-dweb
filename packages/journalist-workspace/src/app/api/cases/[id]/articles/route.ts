@@ -3,7 +3,7 @@ import { getGlobals } from "@/lib/globals"
 
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
   const { db, sessionStore } = getGlobals()
-  const token = req.headers.get("x-session") ?? ""
+  const token = req.cookies.get("session")?.value ?? ""
   if (!sessionStore.getSession(token)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   const articles = await db.getArticlesByCase(params.id)
   return NextResponse.json({
@@ -16,7 +16,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
 
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
   const { db, sessionStore } = getGlobals()
-  const token = req.headers.get("x-session") ?? ""
+  const token = req.cookies.get("session")?.value ?? ""
   const session = sessionStore.getSession(token)
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   if (session.role === "editor") return NextResponse.json({ error: "Forbidden" }, { status: 403 })

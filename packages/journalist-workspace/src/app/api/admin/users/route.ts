@@ -5,7 +5,7 @@ import type { Role } from "@/lib/db"
 
 export async function GET(req: NextRequest) {
   const { db, sessionStore } = getGlobals()
-  const session = sessionStore.getSession(req.headers.get("x-session") ?? "")
+  const session = sessionStore.getSession(req.cookies.get("session")?.value ?? "")
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   if (session.role !== "admin") return NextResponse.json({ error: "Forbidden" }, { status: 403 })
   const res = await db.query("SELECT id, username, role, created_at FROM users ORDER BY created_at ASC")
@@ -14,7 +14,7 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   const { db, sessionStore, masterKey } = getGlobals()
-  const session = sessionStore.getSession(req.headers.get("x-session") ?? "")
+  const session = sessionStore.getSession(req.cookies.get("session")?.value ?? "")
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   if (session.role !== "admin") return NextResponse.json({ error: "Forbidden" }, { status: 403 })
   const body = await req.json()

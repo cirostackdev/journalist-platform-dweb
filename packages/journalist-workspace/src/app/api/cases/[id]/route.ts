@@ -5,7 +5,7 @@ import { getSubmissionContent } from "@/lib/portal-db"
 
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
   const { db, sessionStore, masterKey, portalDbPath } = getGlobals()
-  const token = req.headers.get("x-session") ?? ""
+  const token = req.cookies.get("session")?.value ?? ""
   if (!sessionStore.getSession(token)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   const caseData = await db.getCase(params.id)
   if (!caseData) return NextResponse.json({ error: "Not found" }, { status: 404 })

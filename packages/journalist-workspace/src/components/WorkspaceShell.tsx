@@ -28,12 +28,12 @@ export function WorkspaceShell({
   const [role, setRole] = useState<string | null>(null)
 
   useEffect(() => {
-    const token = sessionStorage.getItem("session")
-    if (!token) {
+    const role = sessionStorage.getItem("role")
+    if (!role) {
       router.replace("/login")
       return
     }
-    setRole(sessionStorage.getItem("role"))
+    setRole(role)
   }, [router])
 
   const NAV = [
@@ -45,11 +45,7 @@ export function WorkspaceShell({
   ]
 
   async function logout() {
-    const token = sessionStorage.getItem("session") ?? ""
-    await fetch("/api/auth/logout", {
-      method: "POST",
-      headers: { "x-session": token },
-    })
+    await fetch("/api/auth/logout", { method: "POST" })
     sessionStorage.clear()
     router.replace("/login")
   }

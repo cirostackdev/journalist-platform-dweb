@@ -3,7 +3,7 @@ import { getGlobals } from "@/lib/globals"
 
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
   const { db, sessionStore } = getGlobals()
-  const token = req.headers.get("x-session") ?? ""
+  const token = req.cookies.get("session")?.value ?? ""
   const session = sessionStore.getSession(token)
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   const article = await db.getArticle(params.id)

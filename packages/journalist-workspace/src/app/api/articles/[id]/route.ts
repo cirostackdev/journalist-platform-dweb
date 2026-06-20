@@ -4,7 +4,7 @@ import { generateDEK, encryptDEK, encryptData, decryptDEK, decryptData } from "@
 
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
   const { db, sessionStore, masterKey } = getGlobals()
-  if (!sessionStore.getSession(req.headers.get("x-session") ?? "")) {
+  if (!sessionStore.getSession(req.cookies.get("session")?.value ?? "")) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
   const article = await db.getArticle(params.id)
@@ -36,7 +36,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
 
 export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
   const { db, sessionStore, masterKey } = getGlobals()
-  const session = sessionStore.getSession(req.headers.get("x-session") ?? "")
+  const session = sessionStore.getSession(req.cookies.get("session")?.value ?? "")
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   const article = await db.getArticle(params.id)
   if (!article) return NextResponse.json({ error: "Not found" }, { status: 404 })

@@ -25,12 +25,11 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const token = sessionStorage.getItem("session")
-    if (!token) {
+    if (!sessionStorage.getItem("role")) {
       router.replace("/login")
       return
     }
-    fetch("/api/cases", { headers: { "x-session": token } })
+    fetch("/api/cases")
       .then((r) => r.json())
       .then(({ cases }) => {
         setCases(cases ?? [])

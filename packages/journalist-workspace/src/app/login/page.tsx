@@ -20,9 +20,9 @@ export default function LoginPage() {
         body: JSON.stringify(data),
       })
       const body = await res.json()
-      if (body.token) {
-        sessionStorage.setItem("session", body.token)
-        sessionStorage.setItem("role", body.role ?? "journalist")
+      if (body.ok) {
+        // Role stored in non-httpOnly cookie by server; also keep in sessionStorage for UI only
+        if (body.role) sessionStorage.setItem("role", body.role)
         router.replace("/dashboard")
       } else {
         setError(body.error ?? "Login failed")
