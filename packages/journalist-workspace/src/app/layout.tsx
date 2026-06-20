@@ -1,14 +1,12 @@
+import type { Metadata } from "next"
+import "./globals.css"
+
+export const metadata: Metadata = { title: "Journalist Workspace" }
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
-      <head>
-        <meta charSet="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <title>Journalist Workspace</title>
-      </head>
-      <body style={{ fontFamily: "monospace", maxWidth: "900px", margin: "0 auto", padding: "1rem" }}>
-        {children}
-      </body>
+    <html lang="en" className="dark">
+      <body className="bg-gray-900 text-white antialiased">{children}</body>
     </html>
   )
 }

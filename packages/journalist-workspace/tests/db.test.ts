@@ -92,4 +92,13 @@ describe("articles", () => {
     const article = await db.getArticle(id)
     expect(article!.encrypted_body).toBe("enc-body")
   })
+
+  test("updateArticleStatus changes article status", async () => {
+    const caseId = await db.insertCase("sub-ref-006")
+    const user = await db.getUserByUsername("reporter1")
+    const id = await db.insertArticle(caseId, user!.id)
+    await db.updateArticleStatus(id, "review")
+    const article = await db.getArticle(id)
+    expect(article!.status).toBe("review")
+  })
 })
