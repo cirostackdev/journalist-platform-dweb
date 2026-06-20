@@ -11,6 +11,11 @@ export async function deriveMasterKey(
   if (salt.length < 16) {
     throw new Error("Salt must be at least 16 bytes")
   }
+  // Use lower memory cost in test environments to prevent OOM with parallel test runners.
+  // bun test sets NODE_ENV=test by default.
+  const isTest = process.env.NODE_ENV === "test"
+  const memoryCost = isTest ? 4096 : 262144 // 4MB in test, 256MB in production
+  const timeCost = isTest ? 2 : 4
   // 256 MB / 4 iterations — nation-state threat model.
   // Complies with NIST SP 800-132 salt minimum (16 bytes) and higher-threat deployments.
   return argon2.hash(passphrase, {
@@ -18,8 +23,8 @@ export async function deriveMasterKey(
     salt,
     hashLength: 32,
     raw: true,
-    memoryCost: 262144,
-    timeCost: 4,
+    memoryCost,
+    timeCost,
     parallelism: 1,
   }) as Promise<Buffer>
 }

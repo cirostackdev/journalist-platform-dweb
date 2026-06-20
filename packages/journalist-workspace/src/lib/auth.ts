@@ -25,7 +25,9 @@ export function createAuthService(opts: { db: Db; sessionStore: SessionStore; ma
     async login(username: string, password: string, totpToken: string): Promise<LoginResult> {
       const user = await opts.db.getUserByUsername(username)
       if (!user) {
-        await argon2.hash("dummy", { type: argon2.argon2id, memoryCost: 262144, timeCost: 4, parallelism: 1 })
+        // Dummy hash to prevent timing attacks; uses lower cost than production deriveMasterKey
+        // (65536/3 vs 262144/4) since this is just timing obfuscation, not actual security
+        await argon2.hash("dummy", { type: argon2.argon2id, memoryCost: 65536, timeCost: 3, parallelism: 1 })
         return { success: false }
       }
       const passwordOk = await argon2.verify(user.argon2_hash, password)

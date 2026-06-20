@@ -1,7 +1,16 @@
 import { marked } from "marked"
+import sanitizeHtml from "sanitize-html"
 import { writeFileSync, mkdirSync, readdirSync, readFileSync, statSync } from "fs"
 import { join } from "path"
 import { decryptDEK, decryptData } from "@journalist/shared/crypto"
+
+const SANITIZE_OPTIONS: sanitizeHtml.IOptions = {
+  allowedTags: ["p", "h1", "h2", "h3", "h4", "h5", "h6", "ul", "ol", "li", "blockquote", "strong", "em", "a", "code", "pre"],
+  allowedAttributes: {
+    a: ["href"],
+  },
+  disallowedTagsMode: "discard",
+}
 
 const DARK_CSS = `
   *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -184,7 +193,8 @@ export async function publishArticle(opts: {
   const dek = await decryptDEK(opts.encryptedDek, opts.masterKey)
   const bodyBuf = await decryptData(opts.encryptedBody, dek)
   const markdown = bodyBuf.toString("utf8")
-  const contentHtml = await marked(markdown)
+  const rawHtml = await marked(markdown)
+  const contentHtml = sanitizeHtml(rawHtml, SANITIZE_OPTIONS)
 
   const title = extractTitleFromHtml(contentHtml) || "Report"
   const publishDate = new Date().toLocaleDateString("en-US", {
