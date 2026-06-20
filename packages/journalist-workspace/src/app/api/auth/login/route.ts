@@ -50,7 +50,7 @@ export async function POST(req: NextRequest) {
     httpOnly: true,
     sameSite: "strict",
     path: "/",
-    // secure: true — set in production behind TLS; omitted here so dev/test works without HTTPS
+    secure: process.env.NODE_ENV === "production" || process.env.SECURE_COOKIES === "true",
   })
   return response
 }
