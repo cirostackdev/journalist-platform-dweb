@@ -51,6 +51,15 @@ export default function ArticleEditorPage({ params }: { params: { id: string } }
   const [publishLoading, setPublishLoading] = useState(false)
   const [publishMsg, setPublishMsg] = useState<string | null>(null)
 
+  const [withdrawLoading, setWithdrawLoading] = useState(false)
+  const [withdrawMsg, setWithdrawMsg] = useState<string | null>(null)
+
+  const [rejectLoading, setRejectLoading] = useState(false)
+  const [rejectMsg, setRejectMsg] = useState<string | null>(null)
+
+  const [retractLoading, setRetractLoading] = useState(false)
+  const [retractMsg, setRetractMsg] = useState<string | null>(null)
+
   async function loadArticle() {
     try {
       const res = await fetch(`/api/articles/${id}`)
@@ -142,6 +151,63 @@ export default function ArticleEditorPage({ params }: { params: { id: string } }
       setPublishMsg("Failed to publish")
     } finally {
       setPublishLoading(false)
+    }
+  }
+
+  async function handleWithdraw() {
+    setWithdrawLoading(true)
+    setWithdrawMsg(null)
+    try {
+      const res = await fetch(`/api/articles/${id}/withdraw`, { method: "PATCH" })
+      const data = await res.json()
+      if (data.error) {
+        setWithdrawMsg("Error: " + data.error)
+      } else {
+        setWithdrawMsg("Withdrawn to draft.")
+        await loadArticle()
+      }
+    } catch {
+      setWithdrawMsg("Failed to withdraw")
+    } finally {
+      setWithdrawLoading(false)
+    }
+  }
+
+  async function handleReject() {
+    setRejectLoading(true)
+    setRejectMsg(null)
+    try {
+      const res = await fetch(`/api/articles/${id}/reject`, { method: "POST" })
+      const data = await res.json()
+      if (data.error) {
+        setRejectMsg("Error: " + data.error)
+      } else {
+        setRejectMsg("Article rejected.")
+        await loadArticle()
+      }
+    } catch {
+      setRejectMsg("Failed to reject")
+    } finally {
+      setRejectLoading(false)
+    }
+  }
+
+  async function handleRetract() {
+    setRetractLoading(true)
+    setRetractMsg(null)
+    try {
+      const res = await fetch(`/api/articles/${id}/retract`, { method: "POST" })
+      const data = await res.json()
+      if (data.error) {
+        setRetractMsg("Error: " + data.error)
+      } else {
+        setRetractMsg("Article retracted.")
+        await loadArticle()
+      }
+    } catch {
+      setRetractMsg("Failed to retract")
+    } finally {
+      setRetractLoading(false)
     }
   }
 
@@ -282,6 +348,72 @@ export default function ArticleEditorPage({ params }: { params: { id: string } }
                       }`}
                     >
                       {publishMsg}
+                    </span>
+                  )}
+                </div>
+              </section>
+            )}
+
+            {/* Withdraw — journalist, review status only */}
+            {article.status === "review" && isJournalist && (
+              <section className="space-y-2">
+                <h2 className="text-sm font-semibold text-white">Withdraw from Review</h2>
+                <div className="flex items-center gap-3 flex-wrap">
+                  <button
+                    onClick={handleWithdraw}
+                    disabled={withdrawLoading}
+                    className="bg-gray-600 hover:bg-gray-500 disabled:opacity-50 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors"
+                  >
+                    {withdrawLoading && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                    {withdrawLoading ? "Withdrawing…" : "Withdraw"}
+                  </button>
+                  {withdrawMsg && (
+                    <span className={`text-xs ${withdrawMsg.startsWith("Error") ? "text-red-400" : "text-green-400"}`}>
+                      {withdrawMsg}
+                    </span>
+                  )}
+                </div>
+              </section>
+            )}
+
+            {/* Reject — editor/admin, review status only */}
+            {article.status === "review" && isEditorOrAdmin && (
+              <section className="space-y-2">
+                <h2 className="text-sm font-semibold text-white">Reject</h2>
+                <div className="flex items-center gap-3 flex-wrap">
+                  <button
+                    onClick={handleReject}
+                    disabled={rejectLoading}
+                    className="bg-red-700 hover:bg-red-600 disabled:opacity-50 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors"
+                  >
+                    {rejectLoading && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                    {rejectLoading ? "Rejecting…" : "Reject Article"}
+                  </button>
+                  {rejectMsg && (
+                    <span className={`text-xs ${rejectMsg.startsWith("Error") ? "text-red-400" : "text-green-400"}`}>
+                      {rejectMsg}
+                    </span>
+                  )}
+                </div>
+              </section>
+            )}
+
+            {/* Retract — editor/admin, published status only */}
+            {article.status === "published" && isEditorOrAdmin && (
+              <section className="space-y-2">
+                <h2 className="text-sm font-semibold text-white">Retract</h2>
+                <div className="flex items-center gap-3 flex-wrap">
+                  <button
+                    onClick={handleRetract}
+                    disabled={retractLoading}
+                    className="bg-red-900 hover:bg-red-800 disabled:opacity-50 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors"
+                  >
+                    {retractLoading && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                    {retractLoading ? "Retracting…" : "Retract Article"}
+                  </button>
+                  {retractMsg && (
+                    <span className={`text-xs ${retractMsg.startsWith("Error") ? "text-red-400" : "text-green-400"}`}>
+                      {retractMsg}
                     </span>
                   )}
                 </div>
