@@ -61,6 +61,7 @@ export interface Db {
   updateArticle(id: string, encryptedBody: string, encryptedDek: string): Promise<void>
   updateArticleStatus(id: string, status: ArticleStatus): Promise<void>
   publishArticle(id: string): Promise<void>
+  deleteArticle(id: string): Promise<void>
 }
 
 const SCHEMA = `
@@ -219,6 +220,10 @@ export async function openDb(connectionString: string): Promise<Db> {
         "UPDATE articles SET status = 'published', published_at = NOW() WHERE id = $1",
         [id]
       )
+    },
+
+    async deleteArticle(id) {
+      await pool.query("DELETE FROM articles WHERE id = $1", [id])
     },
   }
 }
