@@ -1,146 +1,122 @@
 import { describe, test, expect } from "bun:test"
 import express from "express"
 import argon2 from "argon2"
+import { createHmac } from "crypto"
 import { openDb } from "../src/db"
-import { deriveMasterKey, generateDEK, encryptData, encryptDEK } from "@journalist/shared/crypto"
+import {
+  deriveMasterKey,
+  generateNewsroomKeypair,
+  deriveSourceKeypair,
+  boxEncrypt,
+  boxDecrypt,
+} from "@journalist/shared/crypto"
 import { createCheckinRouter } from "../src/routes/checkin"
 
 async function buildApp() {
   const db = openDb(":memory:")
   const salt = Buffer.alloc(16, 0xbb)
   const masterKey = await deriveMasterKey("test-passphrase", salt)
+  const newsroom = await generateNewsroomKeypair()
 
-  const codename = "test-alpha-bravo"
-  const codenameHash = await argon2.hash(codename, {
+  const diceware1 = "alpha-beta-gamma-delta-epsilon-zeta-eta"
+  const diceware2 = "one-two-three-four-five-six-seven"
+  const diceware1Hash = await argon2.hash(diceware1, {
     type: argon2.argon2id, memoryCost: 1024, timeCost: 2, parallelism: 1,
   })
-  const sourceId = db.insertSource(codenameHash)
+  const diceware1Hmac = createHmac("sha256", masterKey).update(diceware1).digest("hex")
+  const { publicKey: sourcePK } = await deriveSourceKeypair(diceware2, { isTest: true })
+  const sourcePKHex = Buffer.from(sourcePK).toString("hex")
+
+  const sourceId = db.insertSource(diceware1Hash, diceware1Hmac, "Ghost", sourcePKHex)
   const submissionId = db.insertSubmission(sourceId, null)
 
-  const dek = await generateDEK()
-  const encDek = await encryptDEK(dek, masterKey)
-  const encBody = await encryptData("Hello from journalist", dek)
-  db.insertMessage(submissionId, "journalist", encBody, encDek)
+  const replyText = "Hello from journalist"
+  const boxedBody = await boxEncrypt(Buffer.from(replyText), sourcePK, newsroom.privateKey)
+  const senderPublicKey = Buffer.from(newsroom.publicKey).toString("hex")
+  db.insertMessage(submissionId, "journalist", boxedBody, senderPublicKey)
 
   const router = createCheckinRouter({ db, masterKey })
   const app = express()
   app.use(express.json())
   app.use("/checkin", router)
 
-  return { app, codename, submissionId }
+  return { app, diceware1, diceware2, newsroom, sourcePK, submissionId }
 }
 
 describe("POST /checkin", () => {
-  test("returns decrypted messages for valid codename", async () => {
-    const { app, codename } = await buildApp()
-    const server = app.listen(0)
-    const port = (server.address() as { port: number }).port
-    const r = await fetch(`http://localhost:${port}/checkin`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ codename }),
-    })
-    const body = await r.json()
-    server.close()
-    expect(r.status).toBe(200)
-    expect(body.messages[0].body).toBe("Hello from journalist")
-  })
-
-  test("returns 401 for invalid codename", async () => {
+  test("returns 400 when diceware1 is missing", async () => {
     const { app } = await buildApp()
     const server = app.listen(0)
     const port = (server.address() as { port: number }).port
     const r = await fetch(`http://localhost:${port}/checkin`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ codename: "wrong-wrong-wrong" }),
+      body: JSON.stringify({}),
+    })
+    server.close()
+    expect(r.status).toBe(400)
+  })
+
+  test("returns 401 for wrong diceware1", async () => {
+    const { app } = await buildApp()
+    const server = app.listen(0)
+    const port = (server.address() as { port: number }).port
+    const r = await fetch(`http://localhost:${port}/checkin`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ diceware1: "wrong-wrong-wrong-wrong-wrong-wrong-wrong" }),
     })
     server.close()
     expect(r.status).toBe(401)
   })
 
-  test("allows check-in without passphrase when source has no passphrase set", async () => {
-    const { app, codename } = await buildApp()
+  test("returns raw ciphertext blobs for valid diceware1", async () => {
+    const { app, diceware1 } = await buildApp()
     const server = app.listen(0)
     const port = (server.address() as { port: number }).port
     const r = await fetch(`http://localhost:${port}/checkin`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ codename }),
-    })
-    server.close()
-    expect(r.status).toBe(200)
-  })
-})
-
-describe("POST /checkin with passphrase", () => {
-  async function buildAppWithPassphrase() {
-    const db = openDb(":memory:")
-    const salt = Buffer.alloc(16, 0xcc)
-    const masterKey = await deriveMasterKey("test-passphrase", salt)
-
-    const codename = "test-charlie-delta"
-    const codenameHash = await argon2.hash(codename, {
-      type: argon2.argon2id, memoryCost: 1024, timeCost: 2, parallelism: 1,
-    })
-    const passphrase = "secure-passphrase-xyz"
-    const passphraseHash = await argon2.hash(passphrase, {
-      type: argon2.argon2id, memoryCost: 1024, timeCost: 2, parallelism: 1,
-    })
-    const sourceId = db.insertSource(codenameHash, passphraseHash)
-    const submissionId = db.insertSubmission(sourceId, null)
-
-    const dek = await generateDEK()
-    const encDek = await encryptDEK(dek, masterKey)
-    const encBody = await encryptData("Hello from journalist", dek)
-    db.insertMessage(submissionId, "journalist", encBody, encDek)
-
-    const router = createCheckinRouter({ db, masterKey })
-    const app = express()
-    app.use(express.json())
-    app.use("/checkin", router)
-
-    return { app, codename, passphrase, submissionId }
-  }
-
-  test("check-in with correct passphrase succeeds", async () => {
-    const { app, codename, passphrase } = await buildAppWithPassphrase()
-    const server = app.listen(0)
-    const port = (server.address() as { port: number }).port
-    const r = await fetch(`http://localhost:${port}/checkin`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ codename, passphrase }),
+      body: JSON.stringify({ diceware1 }),
     })
     const body = await r.json()
     server.close()
     expect(r.status).toBe(200)
-    expect(body.messages[0].body).toBe("Hello from journalist")
+    expect(body.messages).toHaveLength(1)
+    expect(body.messages[0].ciphertext).toBeString()
+    expect(body.messages[0].senderPublicKey).toBeString()
+    expect(body.messages[0].body).toBeUndefined()
   })
 
-  test("check-in without passphrase when required returns 401", async () => {
-    const { app, codename } = await buildAppWithPassphrase()
+  test("returned ciphertext can be decrypted using diceware2-derived private key", async () => {
+    const { app, diceware1, diceware2 } = await buildApp()
     const server = app.listen(0)
     const port = (server.address() as { port: number }).port
     const r = await fetch(`http://localhost:${port}/checkin`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ codename }),
+      body: JSON.stringify({ diceware1 }),
     })
+    const body = await r.json()
     server.close()
-    expect(r.status).toBe(401)
+
+    const { privateKey: sourceSK } = await deriveSourceKeypair(diceware2, { isTest: true })
+    const msg = body.messages[0]
+    const senderPK = Buffer.from(msg.senderPublicKey, "hex")
+    const decrypted = await boxDecrypt(msg.ciphertext, senderPK, sourceSK)
+    expect(decrypted.toString("utf8")).toBe("Hello from journalist")
   })
 
-  test("check-in with wrong passphrase returns 401", async () => {
-    const { app, codename } = await buildAppWithPassphrase()
+  test("diceware2 is never required by the server (auth uses diceware1 only)", async () => {
+    const { app, diceware1 } = await buildApp()
     const server = app.listen(0)
     const port = (server.address() as { port: number }).port
     const r = await fetch(`http://localhost:${port}/checkin`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ codename, passphrase: "wrong-passphrase" }),
+      body: JSON.stringify({ diceware1 }),
     })
     server.close()
-    expect(r.status).toBe(401)
+    expect(r.status).toBe(200)
   })
 })

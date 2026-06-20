@@ -11,8 +11,12 @@ export function startReplyConsumer(opts: ReplyConsumerOptions) {
       try {
         const msg = await consumeQueueMessage(opts.queueDir, opts.queueKey)
         if (msg?.type === "journalist_reply") {
-          const { submissionId, encryptedBody, encryptedDek } = msg as { submissionId: string; encryptedBody: string; encryptedDek: string }
-          opts.db.insertMessage(submissionId, "journalist", encryptedBody, encryptedDek)
+          const { submissionId, boxedBody, senderPublicKey } = msg as {
+            submissionId: string
+            boxedBody: string
+            senderPublicKey: string
+          }
+          opts.db.insertMessage(submissionId, "journalist", boxedBody, senderPublicKey)
         }
       } catch (err) { console.error("[reply-consumer]", err) }
       await new Promise((r) => setTimeout(r, intervalMs))
