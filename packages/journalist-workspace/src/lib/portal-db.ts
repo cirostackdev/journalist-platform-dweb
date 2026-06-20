@@ -137,3 +137,15 @@ export async function getSourcePublicKeyForSubmission(
     db?.close()
   }
 }
+
+const VIDEO_MIME: Record<string, string> = {
+  ".mp4": "video/mp4", ".mov": "video/quicktime", ".avi": "video/x-msvideo",
+  ".mkv": "video/x-matroska", ".webm": "video/webm", ".m4v": "video/mp4",
+  ".wmv": "video/x-ms-wmv", ".flv": "video/x-flv", ".ts": "video/mp2t",
+}
+
+export function getMimeType(filename: string | null): string {
+  if (!filename) return "application/octet-stream"
+  const ext = (filename.toLowerCase().match(/\.[^.]+$/)?.[0]) ?? ""
+  return VIDEO_MIME[ext] ?? "application/octet-stream"
+}
