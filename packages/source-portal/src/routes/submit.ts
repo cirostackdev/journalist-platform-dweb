@@ -5,13 +5,19 @@ import { createHmac } from "crypto"
 import { readFileSync, writeFileSync, mkdirSync, unlinkSync } from "fs"
 import { join } from "path"
 import type { Db } from "../db"
-import { generateCodename } from "../wordlist"
-import { encryptData, generateDEK, encryptDEK, generatePassphrase } from "@journalist/shared/crypto"
+import { generateDiceware } from "../wordlist"
+import {
+  generateDEK,
+  encryptData,
+  deriveSourceKeypair,
+  sealedBoxEncrypt,
+} from "@journalist/shared/crypto"
 import { writeQueueMessage } from "@journalist/shared/queue"
 
 type SubmitRouterOptions = {
   db: Db
-  masterKey: Buffer
+  newsroomPublicKey: Uint8Array
+  masterKey: Buffer           // still needed for HMAC codename index
   queueKey: Uint8Array
   queueDir: string
   uploadDir?: string
@@ -27,71 +33,65 @@ export function createSubmitRouter(opts: SubmitRouterOptions): Router {
   })
 
   router.post("/", upload.array("files"), async (req, res) => {
-    const text = req.body?.text as string | undefined
+    const displayName = (req.body?.displayName as string | undefined)?.trim()
+    const sealedText = req.body?.sealedText as string | undefined
     const files = (req.files ?? []) as Express.Multer.File[]
 
-    if (!text && files.length === 0) {
-      res.status(400).json({ error: "Provide text, files, or both." })
+    if (!displayName) {
+      res.status(400).json({ error: "displayName is required." })
+      return
+    }
+    if (!sealedText && files.length === 0) {
+      res.status(400).json({ error: "Provide a message, files, or both." })
       return
     }
 
     try {
-      const codename = await generateCodename()
-      const codenameHash = await argon2.hash(codename, {
+      const diceware1 = await generateDiceware()
+      const diceware1Hash = await argon2.hash(diceware1, {
         type: argon2.argon2id,
         memoryCost: 65536,
         timeCost: 3,
         parallelism: 1,
       })
+      const diceware1Hmac = createHmac("sha256", opts.masterKey)
+        .update(diceware1)
+        .digest("hex")
 
-      // Auto-generate passphrase — sources do not choose their own
-      const passphrase = generatePassphrase()
-      const passphraseHash = await argon2.hash(passphrase, {
-        type: argon2.argon2id,
-        memoryCost: 65536,
-        timeCost: 3,
-        parallelism: 1,
-      })
+      const diceware2 = await generateDiceware()
+      const { publicKey: sourcePK } = await deriveSourceKeypair(diceware2)
+      const sourcePKHex = Buffer.from(sourcePK).toString("hex")
 
-      const codenameHmac = createHmac("sha256", opts.masterKey).update(codename).digest("hex")
-      const sourceId = opts.db.insertSource(codenameHash, passphraseHash, codenameHmac)
+      const sourceId = opts.db.insertSource(
+        diceware1Hash,
+        diceware1Hmac,
+        displayName,
+        sourcePKHex,
+      )
 
-      let encryptedText: string | null = null
-      if (text) {
-        const dek = await generateDEK()
-        const encryptedDek = await encryptDEK(dek, opts.masterKey)
-        encryptedText = JSON.stringify({
-          dek: encryptedDek,
-          body: await encryptData(text, dek),
-        })
-      }
+      const submissionId = opts.db.insertSubmission(sourceId, sealedText ?? null)
 
-      const submissionId = opts.db.insertSubmission(sourceId, encryptedText)
-
-      // Encrypt uploaded files
       const submissionsDir = opts.submissionsDir ?? "/var/secure-submissions"
       for (let i = 0; i < files.length; i++) {
         const file = files[i]
         const submissionDir = join(submissionsDir, submissionId)
         mkdirSync(submissionDir, { recursive: true })
-        const bytes = readFileSync(file.path)
+
+        const fileBytes = readFileSync(file.path)
         const dek = await generateDEK()
-        const encDek = await encryptDEK(dek, opts.masterKey)
-        const encContent = await encryptData(bytes, dek)
+        const encContent = await encryptData(fileBytes, dek)
         const filePath = join(submissionDir, `${i}.enc`)
         writeFileSync(filePath, encContent, "utf8")
+
+        const sealedDek = await sealedBoxEncrypt(Buffer.from(dek), opts.newsroomPublicKey)
         const encFilename = await encryptData(file.originalname, dek)
+
         writeFileSync(
           join(submissionDir, `${i}.key`),
-          JSON.stringify({ encryptedDek: encDek, encryptedFilename: encFilename }),
+          JSON.stringify({ sealedDek, encryptedFilename: encFilename }),
           "utf8"
         )
-        opts.db.insertSubmissionFile(
-          submissionId,
-          encFilename,
-          encDek,
-          filePath
-        )
+        opts.db.insertSubmissionFile(submissionId, encFilename, sealedDek, filePath)
         unlinkSync(file.path)
       }
 
@@ -99,11 +99,11 @@ export function createSubmitRouter(opts: SubmitRouterOptions): Router {
         type: "new_submission",
         submissionId,
         sourceId,
-        hasText: !!text,
+        hasText: !!sealedText,
         fileCount: files.length,
       })
 
-      res.status(200).json({ codename, passphrase })
+      res.status(200).json({ displayName, diceware1, diceware2 })
     } catch (err) {
       console.error("Submit error:", err)
       res.status(500).json({ error: "Submission failed." })

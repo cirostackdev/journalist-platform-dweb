@@ -43,6 +43,12 @@ async function main() {
 
   const passphrase = await promptPassphrase()
   const masterKey = await deriveMasterKey(passphrase, salt)
+  const newsroomPubKeyHex = process.env.NEWSROOM_PUBLIC_KEY_HEX
+  if (!newsroomPubKeyHex) {
+    console.error("NEWSROOM_PUBLIC_KEY_HEX env var is required. Run: bun scripts/generate-keypair.ts")
+    process.exit(1)
+  }
+  const newsroomPublicKey = new Uint8Array(Buffer.from(newsroomPubKeyHex, "hex"))
   const keyFingerprint = createHash("sha256").update(masterKey).digest("hex").slice(0, 12)
   console.log(`Master key fingerprint: ${keyFingerprint} — verify this matches the other service.`)
 
@@ -79,7 +85,17 @@ async function main() {
   app.get("/checkin", (_req, res) => res.sendFile(join(PUBLIC_DIR, "checkin.html")))
   app.use(express.static(PUBLIC_DIR))
 
-  app.use("/submit", submitLimiter, createSubmitRouter({ db, masterKey, queueKey, queueDir: TO_WORKSPACE_QUEUE_DIR }))
+  app.get("/pubkey", (_req, res) => {
+    res.json({ publicKey: newsroomPubKeyHex })
+  })
+
+  app.use("/submit", submitLimiter, createSubmitRouter({
+    db,
+    newsroomPublicKey,
+    masterKey,
+    queueKey,
+    queueDir: TO_WORKSPACE_QUEUE_DIR,
+  }))
   app.use("/checkin", checkinLimiter, createCheckinRouter({ db, masterKey }))
   app.get("/health", (_req, res) => res.json({ ok: true }))
 
