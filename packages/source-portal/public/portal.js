@@ -248,6 +248,8 @@
         renderReplies(decryptedMessages);
         checkinForm.style.display = "none";
         if (checkinResult) checkinResult.style.display = "block";
+        // Store diceware1 for follow-up messages (needed to re-authenticate)
+        window._checkinDiceware1 = diceware1;
 
       } catch (err) {
         showError("checkin-error", "Error: " + (err.message || "Please try again."));
@@ -286,6 +288,58 @@
 
       // Clear any in-memory reference (belt-and-suspenders)
       // The keypair was derived ephemerally — no persistent storage to clear
+    });
+  }
+
+  // ── Follow-up message ────────────────────────────────────────
+  var followupBtn = document.getElementById("followup-btn");
+  if (followupBtn) {
+    followupBtn.addEventListener("click", async function () {
+      var msg = (document.getElementById("followup-input").value || "").trim();
+      var errorEl = document.getElementById("followup-error");
+      var confirmEl = document.getElementById("followup-confirm");
+      errorEl.style.display = "none";
+      confirmEl.style.display = "none";
+
+      if (!msg) {
+        errorEl.textContent = "Please enter a message.";
+        errorEl.style.display = "block";
+        return;
+      }
+      if (!window._checkinDiceware1) {
+        errorEl.textContent = "Session expired. Please check in again.";
+        errorEl.style.display = "block";
+        return;
+      }
+
+      followupBtn.disabled = true;
+      followupBtn.textContent = "Sending…";
+
+      try {
+        var res = await fetch("/checkin", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            diceware1: window._checkinDiceware1,
+            followUpMessage: msg,
+          }),
+        });
+        var data = await res.json();
+        if (!res.ok) {
+          errorEl.textContent = data.error || "Send failed.";
+          errorEl.style.display = "block";
+          return;
+        }
+        document.getElementById("followup-input").value = "";
+        confirmEl.style.display = "block";
+        setTimeout(function() { confirmEl.style.display = "none"; }, 5000);
+      } catch (err) {
+        errorEl.textContent = "Network error. Please try again.";
+        errorEl.style.display = "block";
+      } finally {
+        followupBtn.disabled = false;
+        followupBtn.textContent = "Send message";
+      }
     });
   }
 

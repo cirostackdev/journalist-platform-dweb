@@ -16,6 +16,7 @@ interface Submission {
   hasText: boolean
   text: string | null
   files: { index: number; originalName: string | null }[]
+  followUps?: { body: string; created_at: number }[]
 }
 
 interface ArticleItem {
@@ -331,6 +332,23 @@ export default function CasePage({ params }: { params: { id: string } }) {
                 )}
                 {!submission.text && submission.files.length === 0 && (
                   <p className="text-sm text-gray-500">Submission content not available.</p>
+                )}
+
+                {/* Source follow-up messages */}
+                {submission?.followUps && submission.followUps.length > 0 && (
+                  <div style={{ marginTop: 16 }}>
+                    <div style={{ fontSize: 11, fontWeight: 600, color: "#6b7280", textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 8 }}>
+                      Source follow-up messages
+                    </div>
+                    {submission.followUps.map((fu: { body: string; created_at: number }, i: number) => (
+                      <div key={i} style={{ background: "#060b14", border: "1px solid #1e2d3d", borderRadius: 6, padding: "10px 14px", marginBottom: 8 }}>
+                        <div style={{ fontSize: 11, color: "#6b7280", marginBottom: 4 }}>
+                          {new Date(fu.created_at).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
+                        </div>
+                        <div style={{ fontSize: 13, lineHeight: 1.6 }}>{fu.body}</div>
+                      </div>
+                    ))}
+                  </div>
                 )}
               </section>
             )}

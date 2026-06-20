@@ -83,6 +83,45 @@ export async function getSubmissionContent(
   }
 }
 
+export interface SourceFollowUpMessage {
+  body: string
+  created_at: number
+}
+
+/**
+ * Returns decrypted follow-up messages sent by the source (direction='source').
+ * These are sealed with the newsroom public key.
+ */
+export async function getSourceFollowUps(
+  submissionId: string,
+  newsroomPublicKey: Uint8Array,
+  newsroomPrivateKey: Uint8Array,
+  portalDbPath: string
+): Promise<SourceFollowUpMessage[]> {
+  let db: InstanceType<typeof Database> | null = null
+  try {
+    db = new Database(portalDbPath, { readonly: true })
+    const rows = db
+      .query(
+        "SELECT encrypted_body, created_at FROM messages WHERE submission_id = ? AND direction = 'source' ORDER BY created_at ASC"
+      )
+      .all(submissionId) as { encrypted_body: string; created_at: number }[]
+
+    const results: SourceFollowUpMessage[] = []
+    for (const row of rows) {
+      try {
+        const buf = await sealedBoxDecrypt(row.encrypted_body, newsroomPublicKey, newsroomPrivateKey)
+        results.push({ body: buf.toString("utf8"), created_at: row.created_at })
+      } catch {
+        results.push({ body: "[decryption error]", created_at: row.created_at })
+      }
+    }
+    return results
+  } finally {
+    db?.close()
+  }
+}
+
 export interface FileForDownload {
   originalName: string | null
   encFilePath: string

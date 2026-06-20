@@ -9,6 +9,7 @@ import {
   deriveSourceKeypair,
   boxEncrypt,
   boxDecrypt,
+  sealedBoxDecrypt,
 } from "@journalist/shared/crypto"
 import { createCheckinRouter } from "../src/routes/checkin"
 
@@ -35,12 +36,12 @@ async function buildApp() {
   const senderPublicKey = Buffer.from(newsroom.publicKey).toString("hex")
   db.insertMessage(submissionId, "journalist", boxedBody, senderPublicKey)
 
-  const router = createCheckinRouter({ db, masterKey })
+  const router = createCheckinRouter({ db, masterKey, newsroomPublicKey: newsroom.publicKey })
   const app = express()
   app.use(express.json())
   app.use("/checkin", router)
 
-  return { app, diceware1, diceware2, newsroom, sourcePK, submissionId }
+  return { app, db, diceware1, diceware2, newsroom, sourcePK, submissionId }
 }
 
 describe("POST /checkin", () => {
@@ -118,5 +119,46 @@ describe("POST /checkin", () => {
     })
     server.close()
     expect(r.status).toBe(200)
+  })
+
+  test("stores follow-up message sealed with newsroom public key", async () => {
+    const { app, diceware1, newsroom, submissionId, db } = await buildApp()
+    const server = app.listen(0)
+    const port = (server.address() as { port: number }).port
+    const r = await fetch(`http://localhost:${port}/checkin`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ diceware1, followUpMessage: "Extra context from source." }),
+    })
+    server.close()
+    expect(r.status).toBe(200)
+
+    // Verify the message was stored with direction='source'
+    const stored = db
+      .query("SELECT encrypted_body, direction FROM messages WHERE submission_id = ? AND direction = 'source'")
+      .all(submissionId) as { encrypted_body: string; direction: string }[]
+    expect(stored).toHaveLength(1)
+
+    // Verify decryptability
+    const decrypted = await sealedBoxDecrypt(stored[0].encrypted_body, newsroom.publicKey, newsroom.privateKey)
+    expect(decrypted.toString("utf8")).toBe("Extra context from source.")
+  })
+
+  test("ignores empty follow-up message", async () => {
+    const { app, diceware1, submissionId, db } = await buildApp()
+    const server = app.listen(0)
+    const port = (server.address() as { port: number }).port
+    const r = await fetch(`http://localhost:${port}/checkin`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ diceware1, followUpMessage: "   " }),
+    })
+    server.close()
+    expect(r.status).toBe(200)
+
+    const stored = db
+      .query("SELECT id FROM messages WHERE submission_id = ? AND direction = 'source'")
+      .all(submissionId)
+    expect(stored).toHaveLength(0)
   })
 })

@@ -6,6 +6,7 @@ import type { Db } from "../db"
 type CheckinRouterOptions = {
   db: Db
   masterKey: Buffer   // used only for HMAC lookup
+  newsroomPublicKey: Uint8Array
 }
 
 export function createCheckinRouter(opts: CheckinRouterOptions): Router {
@@ -49,6 +50,23 @@ export function createCheckinRouter(opts: CheckinRouterOptions): Router {
             senderPublicKey: msg.sender_public_key,
             created_at: msg.created_at,
           })
+        }
+      }
+
+      // Handle optional follow-up message from source
+      const { followUpMessage } = req.body ?? {}
+      if (followUpMessage && typeof followUpMessage === "string" && followUpMessage.trim().length > 0) {
+        // Find first submission to attach the follow-up to
+        // (sources always have at least one submission after check-in auth)
+        const firstSub = submissions[0]
+        if (firstSub) {
+          const { sealedBoxEncrypt } = await import("@journalist/shared/crypto")
+          const sealedBody = await sealedBoxEncrypt(
+            Buffer.from(followUpMessage.trim(), "utf8"),
+            opts.newsroomPublicKey
+          )
+          // Store with direction='source', senderPublicKey='' (anonymous source, no keypair stored)
+          opts.db.insertMessage(firstSub.id, "source", sealedBody, "")
         }
       }
 

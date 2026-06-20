@@ -96,7 +96,7 @@ async function main() {
     queueKey,
     queueDir: TO_WORKSPACE_QUEUE_DIR,
   }))
-  app.use("/checkin", checkinLimiter, createCheckinRouter({ db, masterKey }))
+  app.use("/checkin", checkinLimiter, createCheckinRouter({ db, masterKey, newsroomPublicKey }))
   app.get("/health", (_req, res) => res.json({ ok: true }))
 
   app.listen(PORT, "127.0.0.1", () => {

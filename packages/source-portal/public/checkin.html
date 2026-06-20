@@ -48,6 +48,22 @@
       <span class="badge" id="reply-count"></span>
     </div>
     <div id="replies-container"></div>
+    <div class="followup-section" id="followup-section" style="margin-top:24px;border-top:1px solid var(--border, #1e2d3d);padding-top:20px">
+      <h3 style="font-size:13px;font-weight:600;margin-bottom:10px;color:var(--text-muted, #94a3b8)">Send a follow-up message</h3>
+      <textarea
+        id="followup-input"
+        class="form-textarea"
+        placeholder="Add more context, clarification, or additional information for the newsroom…"
+        rows="4"
+        maxlength="4000"
+        style="width:100%;box-sizing:border-box;margin-bottom:10px"
+      ></textarea>
+      <div class="form-error" id="followup-error" style="display:none"></div>
+      <button type="button" id="followup-btn" class="btn btn-primary">Send message</button>
+      <div id="followup-confirm" style="display:none;color:var(--green, #10b981);font-size:13px;margin-top:8px">
+        ✓ Message sent securely to the newsroom.
+      </div>
+    </div>
     <div class="forget-phrase-section" id="forget-phrase-section">
       <hr style="border:none;border-top:1px solid var(--border, #1e2d3d);margin:24px 0;" />
       <p class="forget-phrase-intro">
