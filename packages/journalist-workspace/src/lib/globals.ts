@@ -3,7 +3,10 @@ import type { SessionStore } from "./session"
 
 export type Globals = {
   db: Db; sessionStore: SessionStore; masterKey: Buffer
-  queueKey: Uint8Array; queueDir: string; publicationDir: string
+  queueKey: Uint8Array
+  toWorkspaceQueueDir: string  // workspace reads from here (new_submission)
+  toPortalQueueDir: string     // workspace writes to here (journalist_reply)
+  publicationDir: string
 }
 
 let globals: Globals | null = null

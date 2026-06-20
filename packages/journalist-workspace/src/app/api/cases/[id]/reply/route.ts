@@ -4,7 +4,7 @@ import { generateDEK, encryptDEK, encryptData } from "@journalist/shared/crypto"
 import { writeQueueMessage } from "@journalist/shared/queue"
 
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
-  const { db, sessionStore, masterKey, queueKey, queueDir } = getGlobals()
+  const { db, sessionStore, masterKey, queueKey, toPortalQueueDir } = getGlobals()
   const token = req.headers.get("x-session") ?? ""
   const session = sessionStore.getSession(token)
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
@@ -17,7 +17,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   const dek = await generateDEK()
   const encDek = await encryptDEK(dek, masterKey)
   const encBody = await encryptData(text, dek)
-  await writeQueueMessage(queueDir, queueKey, {
+  await writeQueueMessage(toPortalQueueDir, queueKey, {
     type: "journalist_reply", submissionId: caseData.submission_ref, encryptedBody: encBody, encryptedDek: encDek,
   })
   return NextResponse.json({ ok: true })

@@ -9,7 +9,8 @@ import { createServer } from "http"
 import next from "next"
 
 const SALT_PATH = "/var/secure/salt"
-const QUEUE_DIR = "/var/secure-queue"
+const TO_WORKSPACE_QUEUE_DIR = "/var/secure-queue/to-workspace"
+const TO_PORTAL_QUEUE_DIR = "/var/secure-queue/to-portal"
 const QUEUE_KEY_RAW_PATH = "/var/secure/queue.key"
 const PUBLICATION_DIR = "/var/publication"
 const DATABASE_URL = process.env.DATABASE_URL ?? "postgres://localhost/journalist_workspace"
@@ -23,6 +24,8 @@ async function promptPassphrase(): Promise<string> {
 async function main() {
   mkdirSync(PUBLICATION_DIR, { recursive: true })
   mkdirSync(`${PUBLICATION_DIR}/articles`, { recursive: true })
+  mkdirSync(TO_WORKSPACE_QUEUE_DIR, { recursive: true })
+  mkdirSync(TO_PORTAL_QUEUE_DIR, { recursive: true })
   if (!existsSync(SALT_PATH)) { console.error(`Salt not found at ${SALT_PATH}. Start source portal first.`); process.exit(1) }
   if (!existsSync(QUEUE_KEY_RAW_PATH)) { console.error(`Queue key not found at ${QUEUE_KEY_RAW_PATH}.`); process.exit(1) }
   const salt = readFileSync(SALT_PATH)
@@ -31,8 +34,8 @@ async function main() {
   const queueKey = new Uint8Array(readFileSync(QUEUE_KEY_RAW_PATH))
   const db = await openDb(DATABASE_URL)
   const sessionStore = createSessionStore()
-  initGlobals({ db, sessionStore, masterKey, queueKey, queueDir: QUEUE_DIR, publicationDir: PUBLICATION_DIR })
-  createQueueConsumer({ db, queueDir: QUEUE_DIR, queueKey })
+  initGlobals({ db, sessionStore, masterKey, queueKey, toWorkspaceQueueDir: TO_WORKSPACE_QUEUE_DIR, toPortalQueueDir: TO_PORTAL_QUEUE_DIR, publicationDir: PUBLICATION_DIR })
+  createQueueConsumer({ db, queueDir: TO_WORKSPACE_QUEUE_DIR, queueKey })
   console.log("Queue consumer started.")
   const app = next({ dev: false, hostname: "127.0.0.1", port: PORT })
   await app.prepare()

@@ -11,7 +11,8 @@ import { createRateLimiter } from "./middleware/rateLimit"
 
 const SALT_PATH = "/var/secure/salt"
 const DB_PATH = "/var/secure/source-portal.db"
-const QUEUE_DIR = "/var/secure-queue"
+const TO_WORKSPACE_QUEUE_DIR = "/var/secure-queue/to-workspace"
+const TO_PORTAL_QUEUE_DIR = "/var/secure-queue/to-portal"
 const QUEUE_KEY_RAW_PATH = "/var/secure/queue.key"
 const PORT = 3000
 
@@ -27,7 +28,8 @@ async function promptPassphrase(): Promise<string> {
 
 async function main() {
   mkdirSync("/var/secure", { recursive: true })
-  mkdirSync(QUEUE_DIR, { recursive: true })
+  mkdirSync(TO_WORKSPACE_QUEUE_DIR, { recursive: true })
+  mkdirSync(TO_PORTAL_QUEUE_DIR, { recursive: true })
 
   let salt: Buffer
   if (existsSync(SALT_PATH)) {
@@ -51,7 +53,7 @@ async function main() {
   }
 
   const db = openDb(DB_PATH)
-  startReplyConsumer({ db, queueDir: QUEUE_DIR, queueKey })
+  startReplyConsumer({ db, queueDir: TO_PORTAL_QUEUE_DIR, queueKey })
   const submitLimiter = createRateLimiter({ maxRequests: 5, windowMs: 60_000 })
   const checkinLimiter = createRateLimiter({ maxRequests: 10, windowMs: 60_000 })
 
@@ -59,7 +61,7 @@ async function main() {
   app.use(express.json({ limit: "1mb" }))
   app.disable("x-powered-by")
 
-  app.use("/submit", submitLimiter, createSubmitRouter({ db, masterKey, queueKey, queueDir: QUEUE_DIR }))
+  app.use("/submit", submitLimiter, createSubmitRouter({ db, masterKey, queueKey, queueDir: TO_WORKSPACE_QUEUE_DIR }))
   app.use("/checkin", checkinLimiter, createCheckinRouter({ db, masterKey }))
   app.get("/health", (_req, res) => res.json({ ok: true }))
 
