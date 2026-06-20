@@ -13,10 +13,10 @@ describe("reply consumer", () => {
   test("ingests journalist_reply and stores in messages table", async () => {
     const db = openDb(":memory:")
     const queueKey = await generateDEK()
-    const sourceId = db.insertSource("some-hash")
+    const sourceId = db.insertSource("some-hash", "some-hmac", "Test Source", "pub-key-hex")
     const submissionId = db.insertSubmission(sourceId, null)
     await writeQueueMessage(TEST_QUEUE_DIR, queueKey, {
-      type: "journalist_reply", submissionId, encryptedBody: "enc-body", encryptedDek: "enc-dek",
+      type: "journalist_reply", submissionId, boxedBody: "enc-body", senderPublicKey: "sender-pub-key",
     })
     const consumer = startReplyConsumer({ db, queueDir: TEST_QUEUE_DIR, queueKey, pollIntervalMs: 50 })
     await new Promise((r) => setTimeout(r, 200))
