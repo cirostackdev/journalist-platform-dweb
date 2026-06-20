@@ -5,7 +5,8 @@
     "dev": "next dev -p 3001 -H 127.0.0.1",
     "build": "next build",
     "start": "next start -p 3001 -H 127.0.0.1",
-    "test": "bun test"
+    "test": "bun test",
+    "create-admin": "bun run scripts/create-admin.ts"
   },
   "dependencies": {
     "@journalist/shared": "workspace:*",
