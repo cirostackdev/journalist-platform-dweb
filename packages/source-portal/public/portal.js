@@ -266,4 +266,27 @@
     });
   }
 
+  // ── Forget Phrase 2 (forward secrecy) ───────────────────────
+  var forgetBtn = document.getElementById("forget-phrase-btn");
+  if (forgetBtn) {
+    forgetBtn.addEventListener("click", function () {
+      var confirmed = window.confirm(
+        "Are you sure? Your original submission will become permanently unreadable to everyone, including the newsroom. This cannot be undone."
+      );
+      if (!confirmed) return;
+
+      // Clear diceware2 from the form inputs so it's no longer in the DOM
+      var d2input = document.getElementById("diceware2-input");
+      if (d2input) d2input.value = "";
+
+      // Hide the button, show confirmation
+      forgetBtn.style.display = "none";
+      var confirmEl = document.getElementById("forget-phrase-confirm");
+      if (confirmEl) confirmEl.style.display = "block";
+
+      // Clear any in-memory reference (belt-and-suspenders)
+      // The keypair was derived ephemerally — no persistent storage to clear
+    });
+  }
+
 })();

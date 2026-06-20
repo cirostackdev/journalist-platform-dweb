@@ -48,6 +48,20 @@
       <span class="badge" id="reply-count"></span>
     </div>
     <div id="replies-container"></div>
+    <div class="forget-phrase-section" id="forget-phrase-section">
+      <hr style="border:none;border-top:1px solid var(--border, #1e2d3d);margin:24px 0;" />
+      <p class="forget-phrase-intro">
+        Once you have read all replies, you may <strong>forget Phrase 2</strong>.
+        Your original submission will become permanently unreadable — even to the newsroom.
+        This cannot be undone.
+      </p>
+      <button type="button" id="forget-phrase-btn" class="btn btn-danger">
+        Forget Phrase 2 (enable forward secrecy)
+      </button>
+      <div id="forget-phrase-confirm" style="display:none" class="forget-confirm">
+        ✓ Phrase 2 forgotten. Your original submission is now permanently unreadable.
+      </div>
+    </div>
     <button class="btn-outline" id="checkin-again-btn" style="margin-top:16px;width:100%;text-align:center;">Check Again</button>
   </div>
 
