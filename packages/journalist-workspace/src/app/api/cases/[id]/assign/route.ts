@@ -10,6 +10,19 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   const body = await req.json()
   const userId = body?.userId as string | undefined
   if (!userId?.trim()) return NextResponse.json({ error: "userId required" }, { status: 400 })
+
+  // Validate the target user exists and has role journalist
+  const targetUser = await db.getUserById(userId)
+  if (!targetUser) {
+    return NextResponse.json({ error: "User not found" }, { status: 404 })
+  }
+  if (targetUser.role !== "journalist") {
+    return NextResponse.json(
+      { error: "Cases can only be assigned to journalists." },
+      { status: 400 }
+    )
+  }
+
   const caseData = await db.getCase(params.id)
   if (!caseData) return NextResponse.json({ error: "Not found" }, { status: 404 })
   await db.assignCase(params.id, userId)
