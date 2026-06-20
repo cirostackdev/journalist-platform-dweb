@@ -1,8 +1,9 @@
 "use client"
-
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import WorkspaceShell from "@/components/WorkspaceShell"
+import Link from "next/link"
+import { WorkspaceShell } from "@/components/WorkspaceShell"
+import { Loader2, ArrowLeft } from "lucide-react"
 
 interface Note {
   id: string
@@ -14,23 +15,53 @@ interface Note {
 interface CaseData {
   id: string
   submission_ref: string
-  status: "new" | "active" | "closed"
+  status: string
   created_at: string
-  assigned_to?: string
+  assigned_to?: string | null
+}
+
+const STATUS_BADGE: Record<string, string> = {
+  new: "bg-yellow-500/20 text-yellow-300",
+  active: "bg-blue-500/20 text-blue-300",
+  closed: "bg-gray-500/20 text-gray-400",
 }
 
 function StatusBadge({ status }: { status: string }) {
-  const styles: Record<string, string> = {
-    new: "bg-yellow-500/20 text-yellow-400",
-    active: "bg-blue-500/20 text-blue-400",
-    closed: "bg-gray-500/20 text-gray-400",
-  }
   return (
     <span
-      className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${styles[status] ?? styles.closed}`}
+      className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+        STATUS_BADGE[status] ?? "bg-gray-500/20 text-gray-400"
+      }`}
     >
       {status}
     </span>
+  )
+}
+
+function FeedbackLine({
+  msg,
+  loading,
+  loadingLabel,
+  idleLabel,
+}: {
+  msg: string | null
+  loading: boolean
+  loadingLabel: string
+  idleLabel: string
+}) {
+  return (
+    <div className="flex items-center gap-3 flex-wrap">
+      <span>{loading ? loadingLabel : idleLabel}</span>
+      {msg && (
+        <span
+          className={`text-xs ${
+            msg.startsWith("Error") ? "text-red-400" : "text-green-400"
+          }`}
+        >
+          {msg}
+        </span>
+      )}
+    </div>
   )
 }
 
@@ -42,6 +73,7 @@ export default function CasePage({ params }: { params: { id: string } }) {
   const [notes, setNotes] = useState<Note[]>([])
   const [loadError, setLoadError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
+  const [role, setRole] = useState<string | null>(null)
 
   // Note form
   const [noteText, setNoteText] = useState("")
@@ -54,24 +86,22 @@ export default function CasePage({ params }: { params: { id: string } }) {
   const [replyMsg, setReplyMsg] = useState<string | null>(null)
 
   // Status
-  const [selectedStatus, setSelectedStatus] = useState<string>("new")
+  const [selectedStatus, setSelectedStatus] = useState("new")
   const [statusLoading, setStatusLoading] = useState(false)
   const [statusMsg, setStatusMsg] = useState<string | null>(null)
 
-  // Assign (admin only)
+  // Assign
   const [assignUserId, setAssignUserId] = useState("")
   const [assignLoading, setAssignLoading] = useState(false)
   const [assignMsg, setAssignMsg] = useState<string | null>(null)
-  const [role, setRole] = useState<string | null>(null)
 
-  function getToken(): string {
+  function getToken() {
     return sessionStorage.getItem("session") ?? ""
   }
 
   async function loadCase() {
     const token = getToken()
     if (!token) return
-
     try {
       const res = await fetch(`/api/cases/${id}`, {
         headers: { "x-session": token },
@@ -92,8 +122,12 @@ export default function CasePage({ params }: { params: { id: string } }) {
   }
 
   useEffect(() => {
-    const storedRole = sessionStorage.getItem("role")
-    setRole(storedRole)
+    const token = sessionStorage.getItem("session")
+    if (!token) {
+      router.replace("/login")
+      return
+    }
+    setRole(sessionStorage.getItem("role"))
     loadCase()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id])
@@ -209,11 +243,10 @@ export default function CasePage({ params }: { params: { id: string } }) {
   }
 
   async function handleCreateArticle() {
-    const token = getToken()
     try {
       const res = await fetch(`/api/cases/${id}/articles`, {
         method: "POST",
-        headers: { "x-session": token },
+        headers: { "x-session": getToken() },
       })
       const data = await res.json()
       if (data.articleId) {
@@ -232,13 +265,13 @@ export default function CasePage({ params }: { params: { id: string } }) {
   return (
     <WorkspaceShell title={caseTitle}>
       <div className="max-w-3xl space-y-6">
-        {/* Back link */}
-        <a
+        <Link
           href="/dashboard"
-          className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+          className="inline-flex items-center gap-1.5 text-sm text-gray-400 hover:text-white transition-colors"
         >
-          ← Back to cases
-        </a>
+          <ArrowLeft className="w-3.5 h-3.5" />
+          Back to cases
+        </Link>
 
         {loadError && (
           <div className="rounded-xl border border-red-500/20 bg-red-500/10 p-4 text-sm text-red-400">
@@ -247,23 +280,23 @@ export default function CasePage({ params }: { params: { id: string } }) {
         )}
 
         {loading && (
-          <div className="rounded-xl border border-border bg-card p-6 space-y-3 animate-pulse">
-            <div className="h-5 bg-muted rounded w-1/3" />
-            <div className="h-4 bg-muted rounded w-1/2" />
+          <div className="bg-gray-800 rounded-xl border border-gray-700 p-6 space-y-3 animate-pulse">
+            <div className="h-5 bg-gray-700 rounded w-1/3" />
+            <div className="h-4 bg-gray-700 rounded w-1/2" />
           </div>
         )}
 
         {caseData && (
           <>
             {/* Case header */}
-            <div className="rounded-xl border border-border bg-card p-4 space-y-2">
-              <div className="flex items-center gap-3">
-                <span className="font-mono text-xs text-muted-foreground break-all">
+            <div className="bg-gray-800 rounded-xl border border-gray-700 p-4 space-y-2">
+              <div className="flex items-center gap-3 flex-wrap">
+                <span className="font-mono text-xs text-gray-400 break-all">
                   {caseData.submission_ref || caseData.id}
                 </span>
                 <StatusBadge status={caseData.status} />
               </div>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-gray-500">
                 Created:{" "}
                 {new Date(caseData.created_at).toLocaleDateString(undefined, {
                   year: "numeric",
@@ -272,46 +305,48 @@ export default function CasePage({ params }: { params: { id: string } }) {
                 })}
               </p>
               {caseData.assigned_to && (
-                <p className="text-xs text-muted-foreground">
-                  Assigned to: <span className="text-foreground">{caseData.assigned_to}</span>
+                <p className="text-xs text-gray-500">
+                  Assigned to:{" "}
+                  <span className="text-gray-300">{caseData.assigned_to}</span>
                 </p>
               )}
             </div>
 
             {/* Notes */}
             <section className="space-y-3">
-              <h2 className="text-sm font-semibold text-foreground">Notes</h2>
+              <h2 className="text-sm font-semibold text-white">Notes</h2>
               {notes.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No notes yet.</p>
+                <p className="text-sm text-gray-500">No notes yet.</p>
               ) : (
                 <div className="space-y-2">
                   {notes.map((note) => (
                     <div
                       key={note.id}
-                      className="rounded-xl border border-border bg-card p-3 space-y-1"
+                      className="bg-gray-800 rounded-xl border border-gray-700 p-3 space-y-1"
                     >
                       <div className="flex items-center justify-between gap-2">
-                        <span className="text-xs font-medium text-muted-foreground">
+                        <span className="text-xs font-medium text-gray-400">
                           {note.author_id}
                         </span>
-                        <span className="text-xs text-muted-foreground">
+                        <span className="text-xs text-gray-500">
                           {new Date(note.created_at).toLocaleString()}
                         </span>
                       </div>
-                      <p className="text-sm text-foreground whitespace-pre-wrap">{note.body}</p>
+                      <p className="text-sm text-gray-200 whitespace-pre-wrap">
+                        {note.body}
+                      </p>
                     </div>
                   ))}
                 </div>
               )}
 
-              {/* Add note form */}
               <form onSubmit={handleAddNote} className="space-y-2">
                 <textarea
                   value={noteText}
                   onChange={(e) => setNoteText(e.target.value)}
                   rows={3}
                   placeholder="Add an internal note…"
-                  className="w-full rounded-lg border border-border bg-muted/50 px-3 py-2 text-sm text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary resize-none"
+                  className="bg-gray-700 border border-gray-600 text-white rounded-lg px-3 py-2 w-full text-sm focus:outline-none focus:border-indigo-500 resize-none placeholder-gray-500"
                 />
                 {noteError && (
                   <p className="text-xs text-red-400">{noteError}</p>
@@ -319,8 +354,9 @@ export default function CasePage({ params }: { params: { id: string } }) {
                 <button
                   type="submit"
                   disabled={noteLoading || !noteText.trim()}
-                  className="bg-primary text-primary-foreground px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-60 disabled:cursor-not-allowed hover:opacity-90 transition-opacity"
+                  className="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors"
                 >
+                  {noteLoading && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
                   {noteLoading ? "Adding…" : "Add Note"}
                 </button>
               </form>
@@ -328,18 +364,22 @@ export default function CasePage({ params }: { params: { id: string } }) {
 
             {/* Reply to source */}
             <section className="space-y-3">
-              <h2 className="text-sm font-semibold text-foreground">Reply to Source</h2>
+              <h2 className="text-sm font-semibold text-white">Reply to Source</h2>
               <form onSubmit={handleReply} className="space-y-2">
                 <textarea
                   value={replyText}
                   onChange={(e) => setReplyText(e.target.value)}
                   rows={3}
                   placeholder="Write a reply to the source…"
-                  className="w-full rounded-lg border border-border bg-muted/50 px-3 py-2 text-sm text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary resize-none"
+                  className="bg-gray-700 border border-gray-600 text-white rounded-lg px-3 py-2 w-full text-sm focus:outline-none focus:border-indigo-500 resize-none placeholder-gray-500"
                 />
                 {replyMsg && (
                   <p
-                    className={`text-xs ${replyMsg.startsWith("Error") ? "text-red-400" : "text-green-400"}`}
+                    className={`text-xs ${
+                      replyMsg.startsWith("Error")
+                        ? "text-red-400"
+                        : "text-green-400"
+                    }`}
                   >
                     {replyMsg}
                   </p>
@@ -347,21 +387,24 @@ export default function CasePage({ params }: { params: { id: string } }) {
                 <button
                   type="submit"
                   disabled={replyLoading || !replyText.trim()}
-                  className="bg-primary text-primary-foreground px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-60 disabled:cursor-not-allowed hover:opacity-90 transition-opacity"
+                  className="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors"
                 >
+                  {replyLoading && (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  )}
                   {replyLoading ? "Sending…" : "Send Reply"}
                 </button>
               </form>
             </section>
 
-            {/* Status */}
+            {/* Update status */}
             <section className="space-y-3">
-              <h2 className="text-sm font-semibold text-foreground">Update Status</h2>
+              <h2 className="text-sm font-semibold text-white">Update Status</h2>
               <div className="flex items-center gap-3 flex-wrap">
                 <select
                   value={selectedStatus}
                   onChange={(e) => setSelectedStatus(e.target.value)}
-                  className="rounded-lg border border-border bg-card px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="bg-gray-700 border border-gray-600 text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-indigo-500"
                 >
                   <option value="new">New</option>
                   <option value="active">Active</option>
@@ -370,13 +413,20 @@ export default function CasePage({ params }: { params: { id: string } }) {
                 <button
                   onClick={handleUpdateStatus}
                   disabled={statusLoading}
-                  className="bg-primary text-primary-foreground px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-60 disabled:cursor-not-allowed hover:opacity-90 transition-opacity"
+                  className="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors"
                 >
+                  {statusLoading && (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  )}
                   {statusLoading ? "Updating…" : "Update Status"}
                 </button>
                 {statusMsg && (
                   <span
-                    className={`text-xs ${statusMsg.startsWith("Error") ? "text-red-400" : "text-green-400"}`}
+                    className={`text-xs ${
+                      statusMsg.startsWith("Error")
+                        ? "text-red-400"
+                        : "text-green-400"
+                    }`}
                   >
                     {statusMsg}
                   </span>
@@ -387,25 +437,32 @@ export default function CasePage({ params }: { params: { id: string } }) {
             {/* Assign (admin only) */}
             {isAdmin && (
               <section className="space-y-3">
-                <h2 className="text-sm font-semibold text-foreground">Assign Case</h2>
+                <h2 className="text-sm font-semibold text-white">Assign Case</h2>
                 <div className="flex items-center gap-3 flex-wrap">
                   <input
                     type="text"
                     value={assignUserId}
                     onChange={(e) => setAssignUserId(e.target.value)}
                     placeholder="User ID"
-                    className="rounded-lg border border-border bg-muted/50 px-3 py-2 text-sm text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                    className="bg-gray-700 border border-gray-600 text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-indigo-500 placeholder-gray-500"
                   />
                   <button
                     onClick={handleAssign}
                     disabled={assignLoading || !assignUserId.trim()}
-                    className="bg-primary text-primary-foreground px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-60 disabled:cursor-not-allowed hover:opacity-90 transition-opacity"
+                    className="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors"
                   >
+                    {assignLoading && (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    )}
                     {assignLoading ? "Assigning…" : "Assign"}
                   </button>
                   {assignMsg && (
                     <span
-                      className={`text-xs ${assignMsg.startsWith("Error") ? "text-red-400" : "text-green-400"}`}
+                      className={`text-xs ${
+                        assignMsg.startsWith("Error")
+                          ? "text-red-400"
+                          : "text-green-400"
+                      }`}
                     >
                       {assignMsg}
                     </span>
@@ -416,10 +473,10 @@ export default function CasePage({ params }: { params: { id: string } }) {
 
             {/* Create article */}
             <section className="space-y-3">
-              <h2 className="text-sm font-semibold text-foreground">Article</h2>
+              <h2 className="text-sm font-semibold text-white">Article</h2>
               <button
                 onClick={handleCreateArticle}
-                className="bg-primary text-primary-foreground px-4 py-2 rounded-lg text-sm font-medium hover:opacity-90 transition-opacity"
+                className="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
               >
                 Create Article from Case
               </button>

@@ -1,204 +1,197 @@
 "use client"
-
-import { useEffect, useState } from "react"
-import { useRouter, usePathname } from "next/navigation"
 import Link from "next/link"
+import { usePathname, useRouter } from "next/navigation"
+import { useState, useEffect } from "react"
 import {
   LayoutDashboard,
   FolderOpen,
   FileText,
   LogOut,
-  ChevronLeft,
-  ChevronRight,
+  PanelLeftClose,
+  PanelLeftOpen,
   Menu,
   X,
+  Shield,
 } from "lucide-react"
 
-interface NavItem {
-  label: string
-  href: string
-  icon: React.ComponentType<{ size?: number; className?: string }>
-  adminOnly?: boolean
-}
-
-const NAV_ITEMS: NavItem[] = [
-  { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-  { label: "Cases", href: "/cases", icon: FolderOpen },
-  { label: "Articles", href: "/articles", icon: FileText, adminOnly: true },
-]
-
-interface WorkspaceShellProps {
+export function WorkspaceShell({
+  children,
+  title,
+}: {
   children: React.ReactNode
   title?: string
-}
-
-export default function WorkspaceShell({ children, title }: WorkspaceShellProps) {
-  const router = useRouter()
+}) {
   const pathname = usePathname()
+  const router = useRouter()
   const [collapsed, setCollapsed] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
   const [role, setRole] = useState<string | null>(null)
-  const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
-    setMounted(true)
     const token = sessionStorage.getItem("session")
-    const storedRole = sessionStorage.getItem("role")
     if (!token) {
       router.replace("/login")
       return
     }
-    setRole(storedRole)
+    setRole(sessionStorage.getItem("role"))
   }, [router])
 
-  function handleLogout() {
-    const token = sessionStorage.getItem("session")
-    fetch("/api/auth/logout", {
+  const NAV = [
+    { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
+    { href: "/cases", icon: FolderOpen, label: "Cases" },
+    ...(role === "admin" || role === "editor"
+      ? [{ href: "/articles", icon: FileText, label: "Articles" }]
+      : []),
+  ]
+
+  async function logout() {
+    const token = sessionStorage.getItem("session") ?? ""
+    await fetch("/api/auth/logout", {
       method: "POST",
-      headers: { "x-session": token ?? "" },
-    }).finally(() => {
-      sessionStorage.clear()
-      router.replace("/login")
+      headers: { "x-session": token },
     })
+    sessionStorage.clear()
+    router.replace("/login")
   }
 
-  const isEditor = role === "editor" || role === "admin"
-  const visibleItems = NAV_ITEMS.filter((item) => !item.adminOnly || isEditor)
-
-  function isActive(href: string) {
-    if (href === "/dashboard") return pathname === "/dashboard"
-    return pathname.startsWith(href)
-  }
-
-  const SidebarContent = () => (
-    <div className="flex flex-col h-full">
-      {/* Logo / branding */}
-      <div
-        className={`flex items-center gap-3 px-3 py-4 border-b border-white/10 ${
-          collapsed ? "justify-center" : ""
-        }`}
-      >
-        {!collapsed && (
-          <span className="text-white font-semibold text-sm truncate">
-            Journalist WS
-          </span>
+  const SidebarContent = ({ mobile = false }: { mobile?: boolean }) => (
+    <>
+      <div className="flex items-center justify-between px-3 py-4 border-b border-white/10 min-h-[57px]">
+        {mobile ? (
+          <>
+            <div className="flex items-center gap-2">
+              <Shield className="w-5 h-5 text-indigo-400" />
+              <span className="font-semibold text-sm text-white">Newsroom</span>
+            </div>
+            <button
+              onClick={() => setMobileOpen(false)}
+              className="p-2 text-gray-400 hover:text-white rounded-lg"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </>
+        ) : collapsed ? (
+          <button
+            onClick={() => setCollapsed(false)}
+            className="mx-auto text-gray-400 hover:text-white"
+          >
+            <PanelLeftOpen className="w-4 h-4" />
+          </button>
+        ) : (
+          <>
+            <div className="flex items-center gap-2">
+              <Shield className="w-5 h-5 text-indigo-400" />
+              <span className="font-semibold text-sm text-white truncate">Newsroom</span>
+            </div>
+            <button
+              onClick={() => setCollapsed(true)}
+              className="text-gray-400 hover:text-white ml-1"
+            >
+              <PanelLeftClose className="w-4 h-4" />
+            </button>
+          </>
         )}
       </div>
 
-      {/* Nav items */}
-      <nav className="flex-1 py-3 space-y-1 px-2">
-        {visibleItems.map((item) => {
-          const Icon = item.icon
-          const active = isActive(item.href)
+      <nav className="flex-1 p-2 space-y-0.5 overflow-y-auto">
+        {NAV.map(({ href, icon: Icon, label }) => {
+          const active =
+            href === "/dashboard"
+              ? pathname === "/dashboard"
+              : pathname.startsWith(href)
+          const isCollapsed = !mobile && collapsed
           return (
             <Link
-              key={item.href}
-              href={item.href}
-              onClick={() => setMobileOpen(false)}
-              className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                collapsed ? "justify-center" : ""
+              key={href}
+              href={href}
+              onClick={() => mobile && setMobileOpen(false)}
+              title={isCollapsed ? label : undefined}
+              className={`flex items-center gap-2.5 py-2 rounded-lg text-sm transition-colors ${
+                isCollapsed ? "justify-center px-2" : "px-3"
               } ${
                 active
-                  ? "bg-primary text-white"
-                  : "text-gray-400 hover:text-white hover:bg-white/10"
+                  ? "bg-white/10 text-white"
+                  : "text-gray-400 hover:text-white hover:bg-white/5"
               }`}
-              title={collapsed ? item.label : undefined}
             >
-              <Icon size={18} />
-              {!collapsed && <span>{item.label}</span>}
+              <Icon className="w-4 h-4 shrink-0" />
+              {!isCollapsed && label}
             </Link>
           )
         })}
       </nav>
 
-      {/* Bottom: logout */}
-      <div className="px-2 pb-4 border-t border-white/10 pt-3">
+      <div className="p-2 border-t border-white/10">
         <button
-          onClick={handleLogout}
-          className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-gray-400 hover:text-white hover:bg-white/10 transition-colors w-full ${
-            collapsed ? "justify-center" : ""
+          onClick={logout}
+          title={!mobile && collapsed ? "Sign out" : undefined}
+          className={`flex items-center gap-2.5 py-2 w-full rounded-lg text-sm text-gray-400 hover:text-white hover:bg-white/5 transition-colors ${
+            !mobile && collapsed ? "justify-center px-2" : "px-3"
           }`}
-          title={collapsed ? "Logout" : undefined}
         >
-          <LogOut size={18} />
-          {!collapsed && <span>Logout</span>}
+          <LogOut className="w-4 h-4" />
+          {(mobile || !collapsed) && "Sign out"}
         </button>
       </div>
-    </div>
+    </>
   )
 
-  if (!mounted) return null
-
   return (
-    <div className="flex h-screen overflow-hidden bg-background">
-      {/* Desktop sidebar */}
-      <aside
-        className={`hidden md:flex flex-col bg-gray-950 border-r border-white/10 flex-shrink-0 transition-all duration-200 ${
-          collapsed ? "w-14" : "w-56"
-        }`}
-      >
-        <SidebarContent />
-        {/* Collapse toggle */}
-        <button
-          onClick={() => setCollapsed(!collapsed)}
-          className="absolute left-0 top-1/2 -translate-y-1/2 translate-x-full bg-gray-950 border border-white/10 rounded-r-md p-1 text-gray-400 hover:text-white z-10"
-          style={{ marginLeft: collapsed ? "3.5rem" : "14rem" }}
-          title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-        >
-          {collapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
-        </button>
-      </aside>
-
-      {/* Mobile drawer overlay */}
+    <div
+      className="flex bg-gray-900 text-white overflow-hidden"
+      style={{ height: "100dvh" }}
+    >
       {mobileOpen && (
         <div
-          className="fixed inset-0 bg-black/60 z-20 md:hidden"
+          className="fixed inset-0 z-40 bg-black/60 lg:hidden"
           onClick={() => setMobileOpen(false)}
         />
       )}
 
       {/* Mobile drawer */}
       <aside
-        className={`fixed inset-y-0 left-0 z-30 w-56 bg-gray-950 border-r border-white/10 flex flex-col md:hidden transition-transform duration-200 ${
+        className={`fixed inset-y-0 left-0 z-50 w-64 flex flex-col bg-gray-950 border-r border-white/10 transition-transform duration-200 lg:hidden ${
           mobileOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
-        <div className="flex items-center justify-between px-3 py-4 border-b border-white/10">
-          <span className="text-white font-semibold text-sm">Journalist WS</span>
-          <button
-            onClick={() => setMobileOpen(false)}
-            className="text-gray-400 hover:text-white"
-          >
-            <X size={18} />
-          </button>
-        </div>
+        <SidebarContent mobile />
+      </aside>
+
+      {/* Desktop sidebar */}
+      <aside
+        className={`hidden lg:flex ${
+          collapsed ? "w-14" : "w-56"
+        } shrink-0 border-r border-white/10 flex-col bg-gray-950 transition-[width] duration-200`}
+      >
         <SidebarContent />
       </aside>
 
-      {/* Main area */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Top bar */}
-        <header className="flex items-center gap-3 px-4 py-3 border-b border-border bg-card flex-shrink-0">
-          {/* Mobile hamburger */}
+      <main className="flex-1 flex flex-col overflow-hidden min-w-0">
+        {/* Mobile top bar */}
+        <div className="lg:hidden flex items-center gap-3 px-4 py-3 border-b border-white/10">
           <button
-            className="md:hidden text-muted-foreground hover:text-foreground"
             onClick={() => setMobileOpen(true)}
+            className="p-2 -ml-2 text-gray-400 hover:text-white rounded-lg"
           >
-            <Menu size={20} />
+            <Menu className="w-5 h-5" />
           </button>
-          <h1 className="text-sm font-semibold text-foreground truncate">
-            {title ?? "Journalist Workspace"}
-          </h1>
-          {role && (
-            <span className="ml-auto text-xs text-muted-foreground capitalize bg-muted px-2 py-1 rounded-md">
-              {role}
-            </span>
+          {title && (
+            <h1 className="text-base font-semibold truncate">{title}</h1>
           )}
-        </header>
+        </div>
 
-        {/* Page content */}
-        <main className="flex-1 overflow-auto p-4 md:p-6">{children}</main>
-      </div>
+        {/* Desktop page title bar */}
+        {title && (
+          <div className="hidden lg:block px-6 py-4 border-b border-white/10">
+            <h1 className="text-lg font-semibold">{title}</h1>
+          </div>
+        )}
+
+        <div className="flex-1 overflow-y-auto p-4 md:p-6">{children}</div>
+      </main>
     </div>
   )
 }
+
+// Default export for backward-compat with existing imports
+export default WorkspaceShell

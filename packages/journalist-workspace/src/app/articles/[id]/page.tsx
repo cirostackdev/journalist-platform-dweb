@@ -1,7 +1,9 @@
 "use client"
-
 import { useEffect, useState } from "react"
-import WorkspaceShell from "@/components/WorkspaceShell"
+import { useRouter } from "next/navigation"
+import Link from "next/link"
+import { WorkspaceShell } from "@/components/WorkspaceShell"
+import { Loader2, ArrowLeft } from "lucide-react"
 
 interface Article {
   id: string
@@ -12,15 +14,18 @@ interface Article {
   body?: string
 }
 
+const STATUS_BADGE: Record<string, string> = {
+  draft: "bg-orange-500/20 text-orange-300",
+  review: "bg-purple-500/20 text-purple-300",
+  published: "bg-green-500/20 text-green-300",
+}
+
 function StatusBadge({ status }: { status: string }) {
-  const styles: Record<string, string> = {
-    draft: "bg-yellow-500/20 text-yellow-400",
-    review: "bg-blue-500/20 text-blue-400",
-    published: "bg-green-500/20 text-green-400",
-  }
   return (
     <span
-      className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${styles[status] ?? "bg-gray-500/20 text-gray-400"}`}
+      className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+        STATUS_BADGE[status] ?? "bg-gray-500/20 text-gray-400"
+      }`}
     >
       {status}
     </span>
@@ -28,12 +33,14 @@ function StatusBadge({ status }: { status: string }) {
 }
 
 export default function ArticleEditorPage({ params }: { params: { id: string } }) {
+  const router = useRouter()
   const { id } = params
 
   const [article, setArticle] = useState<Article | null>(null)
   const [body, setBody] = useState("")
   const [loadError, setLoadError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
+  const [role, setRole] = useState<string | null>(null)
 
   const [saveLoading, setSaveLoading] = useState(false)
   const [saveMsg, setSaveMsg] = useState<string | null>(null)
@@ -44,9 +51,7 @@ export default function ArticleEditorPage({ params }: { params: { id: string } }
   const [publishLoading, setPublishLoading] = useState(false)
   const [publishMsg, setPublishMsg] = useState<string | null>(null)
 
-  const [role, setRole] = useState<string | null>(null)
-
-  function getToken(): string {
+  function getToken() {
     return sessionStorage.getItem("session") ?? ""
   }
 
@@ -62,6 +67,7 @@ export default function ArticleEditorPage({ params }: { params: { id: string } }
         setLoadError(data.error)
       } else {
         setArticle(data.article)
+        // body is encrypted server-side; leave textarea blank for new content
         setBody(data.article?.body ?? "")
       }
     } catch {
@@ -72,8 +78,12 @@ export default function ArticleEditorPage({ params }: { params: { id: string } }
   }
 
   useEffect(() => {
-    const storedRole = sessionStorage.getItem("role")
-    setRole(storedRole)
+    const token = sessionStorage.getItem("session")
+    if (!token) {
+      router.replace("/login")
+      return
+    }
+    setRole(sessionStorage.getItem("role"))
     loadArticle()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id])
@@ -150,19 +160,20 @@ export default function ArticleEditorPage({ params }: { params: { id: string } }
   }
 
   const isEditorOrAdmin = role === "editor" || role === "admin"
+  const isJournalist = role === "journalist"
   const articleTitle = article ? `Article: ${id.substring(0, 8)}…` : "Article Editor"
 
   return (
     <WorkspaceShell title={articleTitle}>
       <div className="max-w-3xl space-y-6">
-        {/* Back link */}
         {article?.case_id && (
-          <a
+          <Link
             href={`/cases/${article.case_id}`}
-            className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+            className="inline-flex items-center gap-1.5 text-sm text-gray-400 hover:text-white transition-colors"
           >
-            ← Back to case
-          </a>
+            <ArrowLeft className="w-3.5 h-3.5" />
+            Back to case
+          </Link>
         )}
 
         {loadError && (
@@ -172,19 +183,19 @@ export default function ArticleEditorPage({ params }: { params: { id: string } }
         )}
 
         {loading && (
-          <div className="rounded-xl border border-border bg-card p-6 space-y-3 animate-pulse">
-            <div className="h-5 bg-muted rounded w-1/3" />
-            <div className="h-32 bg-muted rounded" />
+          <div className="bg-gray-800 rounded-xl border border-gray-700 p-6 space-y-3 animate-pulse">
+            <div className="h-5 bg-gray-700 rounded w-1/3" />
+            <div className="h-32 bg-gray-700 rounded" />
           </div>
         )}
 
         {article && (
           <>
             {/* Article header */}
-            <div className="rounded-xl border border-border bg-card p-4 flex items-center justify-between flex-wrap gap-2">
+            <div className="bg-gray-800 rounded-xl border border-gray-700 p-4 flex items-center justify-between flex-wrap gap-2">
               <div className="space-y-1">
-                <p className="text-xs text-muted-foreground font-mono">ID: {article.id}</p>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-gray-500 font-mono">ID: {article.id}</p>
+                <p className="text-xs text-gray-500">
                   Author: {article.author_id} &middot; Created:{" "}
                   {new Date(article.created_at).toLocaleDateString()}
                 </p>
@@ -194,7 +205,7 @@ export default function ArticleEditorPage({ params }: { params: { id: string } }
 
             {/* Editor */}
             <form onSubmit={handleSave} className="space-y-3">
-              <label className="block text-sm font-semibold text-foreground">
+              <label className="block text-sm font-semibold text-white">
                 Article body (Markdown)
               </label>
               <textarea
@@ -202,19 +213,26 @@ export default function ArticleEditorPage({ params }: { params: { id: string } }
                 onChange={(e) => setBody(e.target.value)}
                 rows={18}
                 placeholder="Write your article in Markdown…"
-                className="w-full rounded-xl border border-border bg-card px-4 py-3 text-sm text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary font-mono resize-y"
+                className="bg-gray-700 border border-gray-600 text-white rounded-lg px-3 py-2 w-full text-sm focus:outline-none focus:border-indigo-500 font-mono resize-y placeholder-gray-500"
               />
               <div className="flex items-center gap-3 flex-wrap">
                 <button
                   type="submit"
                   disabled={saveLoading}
-                  className="bg-primary text-primary-foreground px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-60 disabled:cursor-not-allowed hover:opacity-90 transition-opacity"
+                  className="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors"
                 >
+                  {saveLoading && (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  )}
                   {saveLoading ? "Saving…" : "Save"}
                 </button>
                 {saveMsg && (
                   <span
-                    className={`text-xs ${saveMsg.startsWith("Error") ? "text-red-400" : "text-green-400"}`}
+                    className={`text-xs ${
+                      saveMsg.startsWith("Error")
+                        ? "text-red-400"
+                        : "text-green-400"
+                    }`}
                   >
                     {saveMsg}
                   </span>
@@ -222,21 +240,30 @@ export default function ArticleEditorPage({ params }: { params: { id: string } }
               </div>
             </form>
 
-            {/* Submit for review (draft only) */}
-            {article.status === "draft" && (
+            {/* Submit for review — journalist, draft only */}
+            {article.status === "draft" && isJournalist && (
               <section className="space-y-2">
-                <h2 className="text-sm font-semibold text-foreground">Submit for Review</h2>
+                <h2 className="text-sm font-semibold text-white">
+                  Submit for Review
+                </h2>
                 <div className="flex items-center gap-3 flex-wrap">
                   <button
                     onClick={handleSubmitForReview}
                     disabled={reviewLoading}
-                    className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-60 disabled:cursor-not-allowed hover:bg-blue-500 transition-colors"
+                    className="bg-purple-600 hover:bg-purple-500 disabled:opacity-50 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors"
                   >
+                    {reviewLoading && (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    )}
                     {reviewLoading ? "Submitting…" : "Submit for Review"}
                   </button>
                   {reviewMsg && (
                     <span
-                      className={`text-xs ${reviewMsg.startsWith("Error") ? "text-red-400" : "text-green-400"}`}
+                      className={`text-xs ${
+                        reviewMsg.startsWith("Error")
+                          ? "text-red-400"
+                          : "text-green-400"
+                      }`}
                     >
                       {reviewMsg}
                     </span>
@@ -245,21 +272,28 @@ export default function ArticleEditorPage({ params }: { params: { id: string } }
               </section>
             )}
 
-            {/* Publish (review + editor/admin only) */}
+            {/* Publish — editor/admin, review status only */}
             {article.status === "review" && isEditorOrAdmin && (
               <section className="space-y-2">
-                <h2 className="text-sm font-semibold text-foreground">Publish</h2>
+                <h2 className="text-sm font-semibold text-white">Publish</h2>
                 <div className="flex items-center gap-3 flex-wrap">
                   <button
                     onClick={handlePublish}
                     disabled={publishLoading}
-                    className="bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-60 disabled:cursor-not-allowed hover:bg-green-600 transition-colors"
+                    className="bg-green-700 hover:bg-green-600 disabled:opacity-50 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors"
                   >
+                    {publishLoading && (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    )}
                     {publishLoading ? "Publishing…" : "Publish Article"}
                   </button>
                   {publishMsg && (
                     <span
-                      className={`text-xs ${publishMsg.startsWith("Error") ? "text-red-400" : "text-green-400"}`}
+                      className={`text-xs ${
+                        publishMsg.startsWith("Error")
+                          ? "text-red-400"
+                          : "text-green-400"
+                      }`}
                     >
                       {publishMsg}
                     </span>
