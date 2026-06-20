@@ -3,6 +3,7 @@ import { sealedBoxDecrypt, decryptData } from "@journalist/shared/crypto"
 
 export interface SubmissionContent {
   submissionId: string
+  displayName: string | null
   hasText: boolean
   text: string | null
   files: { index: number; originalName: string | null; encFilePath: string }[]
@@ -19,8 +20,10 @@ export async function getSubmissionContent(
     db = new Database(portalDbPath, { readonly: true })
 
     const row = db
-      .query("SELECT id, encrypted_text FROM submissions WHERE id = ?")
-      .get(submissionId) as { id: string; encrypted_text: string | null } | null
+      .query(
+        "SELECT sub.id, sub.encrypted_text, src.display_name FROM submissions sub JOIN sources src ON sub.source_id = src.id WHERE sub.id = ?"
+      )
+      .get(submissionId) as { id: string; encrypted_text: string | null; display_name: string | null } | null
 
     if (!row) return null
 
@@ -55,7 +58,7 @@ export async function getSubmissionContent(
       })
     )
 
-    return { submissionId, hasText: !!text, text, files }
+    return { submissionId, displayName: row.display_name ?? null, hasText: !!text, text, files }
   } finally {
     db?.close()
   }
