@@ -8,7 +8,7 @@
  *
  * Usage: bun scripts/generate-keypair.ts
  */
-import { generateNewsroomKeypair } from "./packages/shared/src/crypto"
+import { generateNewsroomKeypair } from "../packages/shared/src/crypto"
 
 const { publicKey, privateKey } = await generateNewsroomKeypair()
 const pubHex = Buffer.from(publicKey).toString("hex")
